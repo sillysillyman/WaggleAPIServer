@@ -1,0 +1,22 @@
+package io.waggle.waggleapiserver.domain.user.enums
+
+enum class Industry {
+    FINANCE,
+    REAL_ESTATE,
+    INTERIOR,
+    MEDICAL_HEALTHCARE,
+    ECOMMERCE,
+    ENTERTAINMENT,
+    TRAVEL,
+    SOCIAL_NETWORK,
+    CULTURE_ART,
+    BEAUTY_FASHION,
+    RELIGION,
+    SALES_DISTRIBUTION,
+    EDUCATION,
+    CONSTRUCTION,
+    HEALTH,
+    PARENTING,
+    MEDIA_ADVERTISING,
+    ETC,
+}
