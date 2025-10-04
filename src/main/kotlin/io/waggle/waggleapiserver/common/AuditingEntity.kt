@@ -13,9 +13,9 @@ import java.time.Instant
 abstract class AuditingEntity {
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    val createdAt: Instant = Instant.now()
+    lateinit var createdAt: Instant
 
     @LastModifiedDate
     @Column(nullable = false)
-    var updatedAt: Instant? = null
+    lateinit var updatedAt: Instant
 }
