@@ -30,7 +30,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
 
     // OpenAPI (Swagger)
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
 
     // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -72,12 +72,12 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
-tasks.withType < Test > {
+tasks.withType<Test> {
     outputs.dir(snippetsDir)
     useJUnitPlatform()
 }
 
-tasks.named < org.asciidoctor.gradle.jvm.AsciidoctorTask > ("asciidoctor") {
+tasks.named<org.asciidoctor.gradle.jvm.AsciidoctorTask>("asciidoctor") {
     inputs.dir(snippetsDir)
     dependsOn(tasks.test)
 }
