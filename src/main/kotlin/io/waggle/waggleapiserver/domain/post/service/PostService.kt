@@ -33,7 +33,7 @@ class PostService(
                 val member =
                     memberRepository.findByUserIdAndProjectId(user.id, projectId)
                         ?: throw EntityNotFoundException("Member not found: $user.id, $projectId")
-                member.validateCanCreatePost()
+                member.checkPostCreation()
 
                 projectRepository.getReferenceById(projectId)
             } else {
@@ -64,16 +64,27 @@ class PostService(
         postId: Long,
         request: PostUpsertRequest,
         user: User,
-    ): PostDetailResponse {
+    ) {
+        val (projectId, title, content) = request
+
         val post =
             postRepository.findByIdOrNull(postId)
                 ?: throw EntityNotFoundException("Post not found: $postId")
-        post.validateOwnership(user.id)
+        post.checkOwnership(user.id)
 
-        val (projectId, title, content) = request
-        post.update(title, content)
+        val project =
+            if (projectId != null) {
+                val member =
+                    memberRepository.findByUserIdAndProjectId(user.id, projectId)
+                        ?: throw EntityNotFoundException("Member not found: $user.id, $projectId")
+                member.checkPostCreation()
 
-        return PostDetailResponse.from(post)
+                projectRepository.getReferenceById(projectId)
+            } else {
+                null
+            }
+
+        post.update(title, content, project)
     }
 
     @Transactional
@@ -84,8 +95,7 @@ class PostService(
         val post =
             postRepository.findByIdOrNull(postId)
                 ?: throw EntityNotFoundException("Post not found: $postId")
-
-        post.validateOwnership(user.id)
+        post.checkOwnership(user.id)
 
         postRepository.delete(post)
     }
