@@ -1,4 +1,4 @@
-package io.waggle.waggleapiserver.common.aop
+package io.waggle.waggleapiserver.common.aspect
 
 import jakarta.persistence.EntityManager
 import org.aspectj.lang.annotation.Aspect
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 @Aspect
 @Component
-class HibernateFilterAspect(
+class SoftDeleteFilterAspect(
     private val entityManager: EntityManager,
 ) {
     @Before(
