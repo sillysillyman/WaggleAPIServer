@@ -5,7 +5,7 @@ import java.util.UUID
 
 data class UserSimpleResponse(
     val userId: UUID,
-    val username: String,
+    val username: String?,
     val email: String,
     val profileImageUrl: String?,
 ) {
@@ -13,7 +13,7 @@ data class UserSimpleResponse(
         fun from(user: User): UserSimpleResponse =
             UserSimpleResponse(
                 user.id,
-                user.username!!,
+                user.username,
                 user.email,
                 user.profileImageUrl,
             )
