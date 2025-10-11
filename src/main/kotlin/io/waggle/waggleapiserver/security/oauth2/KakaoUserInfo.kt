@@ -3,11 +3,11 @@ package io.waggle.waggleapiserver.security.oauth2
 class KakaoUserInfo(
     private val attributes: Map<String, Any>,
 ) : OAuth2UserInfo {
-    private val kakaoAccount: Map<String, Any>
-        get() = attributes["kakao_account"] as Map<String, Any>
+    private val kakaoAccount: Map<*, *>
+        get() = attributes["kakao_account"] as Map<*, *>
 
-    private val profile: Map<String, Any>
-        get() = kakaoAccount["profile"] as Map<String, Any>
+    private val profile: Map<*, *>
+        get() = kakaoAccount["profile"] as Map<*, *>
 
     override val provider = "kakao"
     override val providerId: String
