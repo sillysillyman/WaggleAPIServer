@@ -1,16 +1,13 @@
 package io.waggle.waggleapiserver.security.oauth2
 
-import io.waggle.waggleapiserver.domain.user.User
-import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.oauth2.core.user.OAuth2User
+import io.waggle.waggleapiserver.domain.user.UserRole
+import java.security.Principal
+import java.util.UUID
 
 class UserPrincipal(
-    private val oauth2User: OAuth2User,
-    val user: User,
-) : OAuth2User {
-    override fun getName() = user.id.toString()
-
-    override fun getAttributes(): Map<String, Any> = oauth2User.attributes
-
-    override fun getAuthorities(): Collection<GrantedAuthority> = oauth2User.authorities
+    val userId: UUID,
+    val email: String,
+    val role: UserRole,
+) : Principal {
+    override fun getName() = userId.toString()
 }
