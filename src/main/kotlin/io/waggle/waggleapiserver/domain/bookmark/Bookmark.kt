@@ -1,7 +1,6 @@
 package io.waggle.waggleapiserver.domain.bookmark
 
 import io.waggle.waggleapiserver.common.AuditingEntity
-import io.waggle.waggleapiserver.domain.bookmark.Bookmarkable.BookmarkType
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
@@ -40,4 +39,9 @@ class Bookmark(
 ) : AuditingEntity() {
     val bookmarkableId get() = id.bookmarkableId
     val bookmarkableType get() = id.bookmarkableType
+}
+
+enum class BookmarkType {
+    POST,
+    PROJECT,
 }
