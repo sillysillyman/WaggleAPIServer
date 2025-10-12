@@ -4,7 +4,7 @@ import io.waggle.waggleapiserver.domain.post.Post
 import io.waggle.waggleapiserver.domain.user.dto.response.UserDetailResponse
 
 data class PostDetailResponse(
-    val id: Long,
+    val postId: Long,
     val title: String,
     val content: String,
     val user: UserDetailResponse,
