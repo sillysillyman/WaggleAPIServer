@@ -84,6 +84,10 @@ class ProjectService(
                 ?: throw EntityNotFoundException("Member not found: $user.id, $projectId")
         member.checkProjectDeletion()
 
-        projectRepository.deleteById(projectId)
+        val project =
+            projectRepository.findByIdOrNull(projectId)
+                ?: throw EntityNotFoundException("Project not found: $projectId")
+
+        project.delete()
     }
 }

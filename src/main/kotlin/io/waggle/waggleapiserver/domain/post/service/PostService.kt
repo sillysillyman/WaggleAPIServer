@@ -103,6 +103,6 @@ class PostService(
                 ?: throw EntityNotFoundException("Post not found: $postId")
         post.checkOwnership(user.id)
 
-        postRepository.delete(post)
+        post.delete()
     }
 }

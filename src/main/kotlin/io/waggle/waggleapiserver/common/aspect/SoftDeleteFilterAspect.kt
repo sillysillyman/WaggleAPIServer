@@ -16,7 +16,8 @@ class SoftDeleteFilterAspect(
     )
     fun applySoftDeleteFilter() {
         val session = entityManager.unwrap(Session::class.java)
-        val filter = session.enableFilter("deletedFilter")
-        filter.setParameter("isDeleted", false)
+        if (session.getEnabledFilter("deletedFilter") == null) {
+            session.enableFilter("deletedFilter")
+        }
     }
 }
