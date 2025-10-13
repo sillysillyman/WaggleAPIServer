@@ -4,7 +4,6 @@ import io.waggle.waggleapiserver.domain.bookmark.Bookmark
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkId
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.dto.request.BookmarkToggleRequest
-import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkCountResponse
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkToggleResponse
 import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
@@ -70,15 +69,4 @@ class BookmarkService(
             }
         }
     }
-
-    fun getBookmarkableCount(
-        bookmarkableId: Long,
-        bookmarkableType: BookmarkType,
-    ): BookmarkCountResponse =
-        BookmarkCountResponse(
-            bookmarkRepository.countByBookmarkableIdAndBookmarkType(
-                bookmarkableId,
-                bookmarkableType,
-            ),
-        )
 }
