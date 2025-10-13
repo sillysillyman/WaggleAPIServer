@@ -13,4 +13,6 @@ interface UserRepository : JpaRepository<User, UUID> {
         provider: String,
         providerId: String,
     ): User?
+
+    fun findByIdIn(ids: List<UUID>): List<User>
 }
