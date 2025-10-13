@@ -1,5 +1,6 @@
 package io.waggle.waggleapiserver.domain.member
 
+import io.waggle.waggleapiserver.common.AuditingEntity
 import io.waggle.waggleapiserver.domain.member.MemberRole.Permission
 import io.waggle.waggleapiserver.domain.project.Project
 import io.waggle.waggleapiserver.domain.user.User
@@ -32,7 +33,7 @@ class Member(
     val project: Project,
     @Enumerated(EnumType.STRING)
     var role: MemberRole = MemberRole.MEMBER,
-) {
+) : AuditingEntity() {
     fun checkPostCreation() {
         if (!role.hasPermission(Permission.CREATE_POST)) {
             throw AccessDeniedException("$role cannot create posts")
