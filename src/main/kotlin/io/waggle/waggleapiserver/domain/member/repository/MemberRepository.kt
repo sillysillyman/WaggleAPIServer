@@ -22,7 +22,7 @@ interface MemberRepository : JpaRepository<Member, Long> {
     """,
     )
     fun findAllByUserIdWithProjectOrderByCreatedAtAsc(
-        @Param("userId") userId: Long,
+        @Param("userId") userId: UUID,
     ): List<Member>
 
     @Query(
