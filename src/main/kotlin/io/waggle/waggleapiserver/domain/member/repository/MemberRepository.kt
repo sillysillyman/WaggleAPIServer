@@ -9,4 +9,6 @@ interface MemberRepository : JpaRepository<Member, Long> {
         userId: UUID,
         projectId: Long,
     ): Member?
+
+    fun findByProjectId(projectId: Long): List<Member>
 }
