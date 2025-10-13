@@ -24,10 +24,14 @@ import org.springframework.security.access.AccessDeniedException
     indexes = [Index(name = "idx_project_id", columnList = "project_id")],
 )
 class Member(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id: Long = 0,
-    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "user_id") val user: User,
-    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "project_id") val project: Project,
-    @Enumerated(EnumType.STRING) var role: MemberRole = MemberRole.MEMBER,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0,
+    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "user_id", nullable = false)
+    val user: User,
+    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "project_id", nullable = false)
+    val project: Project,
+    @Enumerated(EnumType.STRING)
+    var role: MemberRole = MemberRole.MEMBER,
 ) {
     fun checkPostCreation() {
         if (!role.hasPermission(Permission.CREATE_POST)) {
