@@ -7,6 +7,10 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 100
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
 
   jackson:
     property-naming-strategy: SNAKE_CASE
