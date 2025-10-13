@@ -2,10 +2,13 @@ package io.waggle.waggleapiserver.domain.project
 
 import io.waggle.waggleapiserver.common.util.CurrentUser
 import io.waggle.waggleapiserver.domain.project.dto.request.ProjectUpsertRequest
+import io.waggle.waggleapiserver.domain.project.dto.response.ProjectSimpleResponse
 import io.waggle.waggleapiserver.domain.project.service.ProjectService
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.validation.Valid
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -25,6 +28,11 @@ class ProjectController(
     ) {
         projectService.createProject(request, user)
     }
+
+    @GetMapping("/{projectId}")
+    fun getProject(
+        @PathVariable("projectId") projectId: Long,
+    ): ResponseEntity<ProjectSimpleResponse> = ResponseEntity.ok(projectService.getProject(projectId))
 
     @PutMapping("/{projectId}")
     fun updateProject(

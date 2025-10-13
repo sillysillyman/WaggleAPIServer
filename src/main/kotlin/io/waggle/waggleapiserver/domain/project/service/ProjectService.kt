@@ -5,6 +5,7 @@ import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.project.Project
 import io.waggle.waggleapiserver.domain.project.dto.request.ProjectUpsertRequest
+import io.waggle.waggleapiserver.domain.project.dto.response.ProjectSimpleResponse
 import io.waggle.waggleapiserver.domain.project.repository.ProjectRepository
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.persistence.EntityNotFoundException
@@ -45,6 +46,13 @@ class ProjectService(
 
         projectRepository.save(project)
         memberRepository.save(member)
+    }
+
+    fun getProject(projectId: Long): ProjectSimpleResponse {
+        val project =
+            projectRepository.findByIdOrNull(projectId)
+                ?: throw EntityNotFoundException("Project not found: $projectId")
+        return ProjectSimpleResponse.from(project)
     }
 
     @Transactional
