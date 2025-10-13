@@ -8,11 +8,13 @@ import io.waggle.waggleapiserver.domain.project.dto.request.ProjectUpsertRequest
 import io.waggle.waggleapiserver.domain.project.dto.response.ProjectSimpleResponse
 import io.waggle.waggleapiserver.domain.project.repository.ProjectRepository
 import io.waggle.waggleapiserver.domain.user.User
+import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 @Transactional(readOnly = true)
@@ -54,6 +56,11 @@ class ProjectService(
                 ?: throw EntityNotFoundException("Project not found: $projectId")
         return ProjectSimpleResponse.from(project)
     }
+
+    fun getUserProjects(userId: UUID): List<ProjectSimpleResponse> =
+        memberRepository
+            .findAllByUserIdWithProjectOrderByCreatedAtAsc(userId)
+            .map { ProjectSimpleResponse.from(it.project) }
 
     @Transactional
     fun updateProject(
