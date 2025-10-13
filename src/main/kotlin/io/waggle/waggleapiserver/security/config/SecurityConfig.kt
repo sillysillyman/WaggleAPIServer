@@ -40,7 +40,7 @@ class SecurityConfig(
                         "/oauth2/**",
                         "/login/oauth2/**",
                     ).permitAll()
-                    .requestMatchers(HttpMethod.GET, "/posts/**", "/users/**")
+                    .requestMatchers(HttpMethod.GET, "/posts/**", "/projects/**", "/users/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated()
