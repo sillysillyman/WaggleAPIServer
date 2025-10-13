@@ -19,12 +19,12 @@ import java.util.UUID
 
 @Embeddable
 data class BookmarkId(
-    @Column(name = "user_id", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     val userId: UUID,
-    @Column(name = "bookmarkable_id", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     val bookmarkableId: Long,
     @Enumerated(EnumType.STRING)
-    @Column(name = "bookmark_type", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     val bookmarkType: BookmarkType,
 ) : Serializable
 
@@ -40,7 +40,7 @@ class Bookmark(
     @MapsId("userId")
     @JoinColumn(name = "user_id", updatable = false, insertable = false)
     val user: User,
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 ) {
     val bookmarkableId: Long get() = id.bookmarkableId
