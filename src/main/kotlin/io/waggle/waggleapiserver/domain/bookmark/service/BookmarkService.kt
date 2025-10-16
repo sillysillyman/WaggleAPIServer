@@ -26,21 +26,19 @@ class BookmarkService(
         request: BookmarkToggleRequest,
         user: User,
     ): BookmarkToggleResponse {
+        val (bookmarkableId, bookmarkType) = request
+
         val bookmarkId =
             BookmarkId(
-                bookmarkableId = request.bookmarkableId,
-                bookmarkType = request.bookmarkType,
                 userId = user.id,
+                bookmarkableId = bookmarkableId,
+                bookmarkType = bookmarkType,
             )
         return if (bookmarkRepository.existsById(bookmarkId)) {
             bookmarkRepository.deleteById(bookmarkId)
             BookmarkToggleResponse(false)
         } else {
-            val bookmark =
-                Bookmark(
-                    id = bookmarkId,
-                    user = user,
-                )
+            val bookmark = Bookmark(bookmarkId)
             bookmarkRepository.save(bookmark)
             BookmarkToggleResponse(true)
         }
@@ -50,7 +48,7 @@ class BookmarkService(
         bookmarkType: BookmarkType,
         user: User,
     ): List<BookmarkResponse> {
-        val bookmarkableIds: List<Long> =
+        val bookmarkableIds =
             bookmarkRepository
                 .findByIdUserIdAndIdBookmarkType(user.id, bookmarkType)
                 .map { it.bookmarkableId }

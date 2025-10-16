@@ -11,20 +11,6 @@ interface PostRepository : JpaRepository<Post, Long> {
     @Query(
         """
         SELECT p FROM Post p
-        LEFT JOIN FETCH p.user
-        LEFT JOIN FETCH p.project
-        WHERE p.id = :id
-    """,
-    )
-    fun findByIdOrNull(
-        @Param("id") id: Long,
-    ): Post?
-
-    @Query(
-        """
-        SELECT p FROM Post p
-        LEFT JOIN FETCH p.user
-        LEFT JOIN FETCH p.project
         WHERE p.title LIKE CONCAT('%', :query, '%')
     """,
     )
