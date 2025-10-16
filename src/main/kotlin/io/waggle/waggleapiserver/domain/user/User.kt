@@ -27,15 +27,17 @@ class User(
     @Column(nullable = false, length = 20) val provider: String,
     @Column(name = "provider_id", nullable = false) val providerId: String,
     @Column(nullable = false) val email: String,
-    var profileImageUrl: String?,
+    @Column(name = "profile_image_url", nullable = false) var profileImageUrl: String?,
     @Enumerated(EnumType.STRING) @Column(nullable = false) var role: UserRole = UserRole.USER,
 ) : AuditingEntity() {
     var username: String? = null
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "work_time")
     var workTime: WorkTime? = null
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "work_way")
     var workWay: WorkWay? = null
 
     @Enumerated(EnumType.STRING)
@@ -44,6 +46,7 @@ class User(
     @Enumerated(EnumType.STRING)
     var position: Position? = null
 
+    @Column(name = "year_count")
     var yearCount: Int? = null
 
     @Column(columnDefinition = "TEXT")

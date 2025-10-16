@@ -16,13 +16,14 @@ import java.time.Instant
 @Filter(name = "deletedFilter", condition = "deleted_at IS NULL")
 abstract class AuditingEntity {
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     lateinit var createdAt: Instant
 
     @LastModifiedDate
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     lateinit var updatedAt: Instant
 
+    @Column(name = "deleted_at")
     var deletedAt: Instant? = null
 
     fun delete() {
