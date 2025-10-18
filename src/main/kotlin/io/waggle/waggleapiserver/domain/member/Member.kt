@@ -1,7 +1,6 @@
 package io.waggle.waggleapiserver.domain.member
 
 import io.waggle.waggleapiserver.common.AuditingEntity
-import io.waggle.waggleapiserver.domain.member.MemberRole.Permission
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -31,33 +30,9 @@ class Member(
     @Enumerated(EnumType.STRING)
     var role: MemberRole = MemberRole.MEMBER,
 ) : AuditingEntity() {
-    fun checkPostCreation() {
-        if (!role.hasPermission(Permission.CREATE_POST)) {
-            throw AccessDeniedException("$role cannot create posts")
-        }
-    }
-
-    fun checkPostDeletion() {
-        if (!role.hasPermission(Permission.DELETE_POST)) {
-            throw AccessDeniedException("$role cannot delete posts")
-        }
-    }
-
-    fun checkProjectUpdate() {
-        if (!role.hasPermission(Permission.MODIFY_PROJECT)) {
-            throw AccessDeniedException("$role cannot update project")
-        }
-    }
-
-    fun checkProjectDeletion() {
-        if (!role.hasPermission(Permission.DELETE_PROJECT)) {
-            throw AccessDeniedException("Only LEADER can delete project")
-        }
-    }
-
-    fun checkMemberManagement() {
-        if (!role.hasPermission(Permission.MANAGE_MEMBERS)) {
-            throw AccessDeniedException("$role cannot manage members")
+    fun checkMembership(requiredRole: MemberRole) {
+        if (role.level < requiredRole.level) {
+            throw AccessDeniedException("$role do not have the authority")
         }
     }
 }

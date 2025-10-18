@@ -4,6 +4,8 @@ import io.waggle.waggleapiserver.common.util.CurrentUser
 import io.waggle.waggleapiserver.domain.project.dto.request.ProjectUpsertRequest
 import io.waggle.waggleapiserver.domain.project.dto.response.ProjectSimpleResponse
 import io.waggle.waggleapiserver.domain.project.service.ProjectService
+import io.waggle.waggleapiserver.domain.recruitment.dto.request.RecruitmentUpsertRequest
+import io.waggle.waggleapiserver.domain.recruitment.service.RecruitmentService
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
 import jakarta.validation.Valid
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/projects")
 @RestController
 class ProjectController(
+    private val recruitmentService: RecruitmentService,
     private val projectService: ProjectService,
 ) {
     @PostMapping
@@ -28,6 +31,15 @@ class ProjectController(
         @CurrentUser user: User,
     ) {
         projectService.createProject(request, user)
+    }
+
+    @PostMapping("/{projectId}/recruitments")
+    fun createProjectRecruitments(
+        @PathVariable projectId: Long,
+        @Valid @RequestBody request: List<RecruitmentUpsertRequest>,
+        @CurrentUser user: User,
+    ) {
+        recruitmentService.createRecruitments(projectId, request, user)
     }
 
     @GetMapping("/{projectId}")

@@ -80,7 +80,7 @@ class ProjectService(
         val member =
             memberRepository.findByUserIdAndProjectId(user.id, projectId)
                 ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-        member.checkProjectUpdate()
+        member.checkMembership(MemberRole.MANAGER)
 
         val project =
             projectRepository.findByIdOrNull(projectId)
@@ -106,7 +106,7 @@ class ProjectService(
         val member =
             memberRepository.findByUserIdAndProjectId(user.id, projectId)
                 ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-        member.checkProjectDeletion()
+        member.checkMembership(MemberRole.LEADER)
 
         val project =
             projectRepository.findByIdOrNull(projectId)

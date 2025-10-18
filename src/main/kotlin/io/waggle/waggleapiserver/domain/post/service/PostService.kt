@@ -1,5 +1,6 @@
 package io.waggle.waggleapiserver.domain.post.service
 
+import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.post.Post
 import io.waggle.waggleapiserver.domain.post.dto.request.PostSearchQuery
@@ -36,8 +37,7 @@ class PostService(
             val member =
                 memberRepository.findByUserIdAndProjectId(user.id, projectId)
                     ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-
-            member.checkPostCreation()
+            member.checkMembership(MemberRole.MEMBER)
         }
 
         val post =
@@ -95,8 +95,7 @@ class PostService(
             val member =
                 memberRepository.findByUserIdAndProjectId(user.id, projectId)
                     ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-
-            member.checkPostCreation()
+            member.checkMembership(MemberRole.MEMBER)
         }
 
         post.update(title, content, projectId)
