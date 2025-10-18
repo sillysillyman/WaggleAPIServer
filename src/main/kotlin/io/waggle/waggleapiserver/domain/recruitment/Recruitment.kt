@@ -11,10 +11,12 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
 @Table(
     name = "recruitments",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["project_id", "position"])],
     indexes = [Index(name = "idx_post_id", columnList = "post_id")],
 )
 class Recruitment(
