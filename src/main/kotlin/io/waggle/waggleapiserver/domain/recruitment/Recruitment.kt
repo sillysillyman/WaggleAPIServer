@@ -20,11 +20,10 @@ import jakarta.persistence.UniqueConstraint
     indexes = [Index(name = "idx_recruitments_project_id", columnList = "project_id")],
 )
 class Recruitment(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20)")
     val position: Position,
     @Column(name = "current_count", nullable = false)
     var currentCount: Int = 0,

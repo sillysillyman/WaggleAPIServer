@@ -23,33 +23,42 @@ import java.util.UUID
     indexes = [Index(name = "idx_users_email", columnList = "email")],
 )
 class User(
-    @Id val id: UUID = UuidCreator.getTimeOrderedEpoch(),
-    @Column(nullable = false, length = 20) val provider: String,
-    @Column(name = "provider_id", nullable = false) val providerId: String,
-    @Column(nullable = false) val email: String,
-    @Column(name = "profile_image_url", nullable = false) var profileImageUrl: String?,
-    @Enumerated(EnumType.STRING) @Column(nullable = false) var role: UserRole = UserRole.USER,
+    @Id
+    val id: UUID = UuidCreator.getTimeOrderedEpoch(),
+    @Column(nullable = false)
+    val provider: String,
+    @Column(name = "provider_id", nullable = false)
+    val providerId: String,
+    @Column(nullable = false)
+    val email: String,
+    @Column(name = "profile_image_url")
+    var profileImageUrl: String?,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(10)")
+    var role: UserRole = UserRole.USER,
 ) : AuditingEntity() {
     var username: String? = null
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "work_time")
+    @Column(name = "work_time", columnDefinition = "VARCHAR(20)")
     var workTime: WorkTime? = null
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "work_way")
+    @Column(name = "work_way", columnDefinition = "VARCHAR(20)")
     var workWay: WorkWay? = null
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(20)")
     var sido: Sido? = null
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(20)")
     var position: Position? = null
 
     @Column(name = "year_count")
     var yearCount: Int? = null
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "VARCHAR(5000)")
     var detail: String? = null
 
     fun update(

@@ -18,8 +18,7 @@ import java.util.UUID
     indexes = [Index(name = "idx_follows_folowee_id", columnList = "followee_id")],
 )
 class Follow(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
     @Column(name = "follower_id", nullable = false)
     val followerId: UUID,

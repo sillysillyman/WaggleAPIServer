@@ -28,6 +28,7 @@ class Member(
     @Column(name = "project_id", nullable = false, updatable = false)
     val projectId: Long,
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(10)")
     var role: MemberRole = MemberRole.MEMBER,
 ) : AuditingEntity() {
     fun checkMembership(requiredRole: MemberRole) {
