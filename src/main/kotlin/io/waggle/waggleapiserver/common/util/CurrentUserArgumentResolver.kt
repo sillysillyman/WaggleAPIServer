@@ -1,5 +1,6 @@
 package io.waggle.waggleapiserver.common.util
 
+import io.swagger.v3.oas.annotations.Parameter
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import io.waggle.waggleapiserver.security.oauth2.UserPrincipal
@@ -16,6 +17,7 @@ import org.springframework.web.method.support.ModelAndViewContainer
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
+@Parameter(hidden = true)
 annotation class CurrentUser
 
 @Component
