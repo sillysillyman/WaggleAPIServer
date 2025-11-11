@@ -4,5 +4,4 @@ enum class ApplicationStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    CANCELED,
 }
