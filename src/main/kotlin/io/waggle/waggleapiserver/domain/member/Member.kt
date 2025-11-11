@@ -31,7 +31,7 @@ class Member(
     @Column(nullable = false, columnDefinition = "VARCHAR(10)")
     var role: MemberRole = MemberRole.MEMBER,
 ) : AuditingEntity() {
-    fun checkMembership(requiredRole: MemberRole) {
+    fun checkMemberRole(requiredRole: MemberRole) {
         if (role.level < requiredRole.level) {
             throw AccessDeniedException("$role do not have the authority")
         }

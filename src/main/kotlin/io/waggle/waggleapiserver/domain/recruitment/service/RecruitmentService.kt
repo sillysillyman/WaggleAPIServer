@@ -4,6 +4,7 @@ import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.recruitment.Recruitment
 import io.waggle.waggleapiserver.domain.recruitment.dto.request.RecruitmentUpsertRequest
+import io.waggle.waggleapiserver.domain.recruitment.dto.response.RecruitmentResponse
 import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentRepository
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.persistence.EntityNotFoundException
@@ -22,11 +23,11 @@ class RecruitmentService(
         projectId: Long,
         request: List<RecruitmentUpsertRequest>,
         user: User,
-    ) {
+    ): List<RecruitmentResponse> {
         val member =
             memberRepository.findByUserIdAndProjectId(user.id, projectId)
                 ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-        member.checkMembership(MemberRole.MANAGER)
+        member.checkMemberRole(MemberRole.MANAGER)
 
         val existingPositions =
             recruitmentRepository
@@ -45,6 +46,8 @@ class RecruitmentService(
                     projectId = projectId,
                 )
             }
-        recruitmentRepository.saveAll(recruitments)
+        val savedRecruitments = recruitmentRepository.saveAll(recruitments)
+
+        return savedRecruitments.map { RecruitmentResponse.from(it) }
     }
 }

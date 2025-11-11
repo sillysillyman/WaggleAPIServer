@@ -2,13 +2,13 @@ package io.waggle.waggleapiserver.domain.project.service
 
 import io.waggle.waggleapiserver.domain.member.Member
 import io.waggle.waggleapiserver.domain.member.MemberRole
+import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.project.Project
 import io.waggle.waggleapiserver.domain.project.dto.request.ProjectUpsertRequest
-import io.waggle.waggleapiserver.domain.project.dto.response.ProjectSimpleResponse
+import io.waggle.waggleapiserver.domain.project.dto.response.ProjectDetailResponse
 import io.waggle.waggleapiserver.domain.project.repository.ProjectRepository
 import io.waggle.waggleapiserver.domain.user.User
-import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.dao.DuplicateKeyException
@@ -27,7 +27,7 @@ class ProjectService(
     fun createProject(
         request: ProjectUpsertRequest,
         user: User,
-    ) {
+    ): ProjectDetailResponse {
         val (name, description) = request
 
         if (projectRepository.existsByName(name)) {
@@ -51,24 +51,27 @@ class ProjectService(
                 role = MemberRole.LEADER,
             )
 
-        memberRepository.save(member)
+        val savedMember = memberRepository.save(member)
+
+        return ProjectDetailResponse.of(savedProject, listOf(MemberResponse.of(savedMember, user)))
     }
 
-    fun getProject(projectId: Long): ProjectSimpleResponse {
+    fun getProject(projectId: Long): ProjectDetailResponse {
         val project =
             projectRepository.findByIdOrNull(projectId)
                 ?: throw EntityNotFoundException("Project not found: $projectId")
-        return ProjectSimpleResponse.from(project)
-    }
+        val members = memberRepository.findAllByProjectIdOrderByCreatedAtAsc(projectId)
+        val users = userRepository.findAllById(members.map { it.userId }).associateBy { it.id }
 
-    fun getProjectUsers(projectId: Long): List<UserSimpleResponse> {
-        val userIds =
-            memberRepository
-                .findAllByProjectIdOrderByCreatedAtAsc(projectId)
-                .map { it.userId }
-        val users = userRepository.findAllById(userIds)
-
-        return users.map { UserSimpleResponse.from(it) }
+        return ProjectDetailResponse.of(
+            project,
+            members.map {
+                MemberResponse.of(
+                    it,
+                    users[it.userId]!!,
+                )
+            },
+        )
     }
 
     @Transactional
@@ -76,11 +79,11 @@ class ProjectService(
         projectId: Long,
         request: ProjectUpsertRequest,
         user: User,
-    ) {
+    ): ProjectDetailResponse {
         val member =
             memberRepository.findByUserIdAndProjectId(user.id, projectId)
                 ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-        member.checkMembership(MemberRole.MANAGER)
+        member.checkMemberRole(MemberRole.MANAGER)
 
         val project =
             projectRepository.findByIdOrNull(projectId)
@@ -96,6 +99,19 @@ class ProjectService(
             name = name,
             description = description,
         )
+
+        val members = memberRepository.findAllByProjectIdOrderByCreatedAtAsc(projectId)
+        val users = userRepository.findAllById(members.map { it.userId }).associateBy { it.id }
+
+        return ProjectDetailResponse.of(
+            project,
+            members.map {
+                MemberResponse.of(
+                    it,
+                    users[it.userId]!!,
+                )
+            },
+        )
     }
 
     @Transactional
@@ -106,7 +122,7 @@ class ProjectService(
         val member =
             memberRepository.findByUserIdAndProjectId(user.id, projectId)
                 ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-        member.checkMembership(MemberRole.LEADER)
+        member.checkMemberRole(MemberRole.LEADER)
 
         val project =
             projectRepository.findByIdOrNull(projectId)

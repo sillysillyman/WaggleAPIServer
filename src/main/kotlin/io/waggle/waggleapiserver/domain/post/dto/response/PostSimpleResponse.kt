@@ -14,13 +14,13 @@ data class PostSimpleResponse(
     companion object {
         fun of(
             post: Post,
-            user: User,
+            userSimpleResponse: UserSimpleResponse,
         ): PostSimpleResponse =
             PostSimpleResponse(
-                post.id,
-                post.title,
-                post.content,
-                UserSimpleResponse.from(user),
+                postId = post.id,
+                title = post.title,
+                content = post.content,
+                user = userSimpleResponse,
             )
     }
 }

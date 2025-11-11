@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.domain.application.dto.response
 import io.waggle.waggleapiserver.domain.application.Application
 import io.waggle.waggleapiserver.domain.application.ApplicationStatus
 import io.waggle.waggleapiserver.domain.user.enums.Position
+import java.time.Instant
 import java.util.UUID
 
 data class ApplicationResponse(
@@ -11,6 +12,7 @@ data class ApplicationResponse(
     val status: ApplicationStatus,
     val projectId: Long,
     val userId: UUID,
+    val createdAt: Instant,
 ) {
     companion object {
         fun from(application: Application): ApplicationResponse =
@@ -20,6 +22,7 @@ data class ApplicationResponse(
                 status = application.status,
                 projectId = application.projectId,
                 userId = application.userId,
+                createdAt = application.createdAt,
             )
     }
 }

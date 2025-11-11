@@ -9,7 +9,7 @@ import java.util.UUID
 
 data class UserDetailResponse(
     val userId: UUID,
-    val username: String?,
+    val username: String,
     val email: String,
     val profileImageUrl: String?,
     val workTime: WorkTime?,
@@ -23,7 +23,7 @@ data class UserDetailResponse(
         fun from(user: User): UserDetailResponse =
             UserDetailResponse(
                 user.id,
-                user.username,
+                user.username!!,
                 user.email,
                 user.profileImageUrl,
                 user.workTime,

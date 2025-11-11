@@ -10,6 +10,7 @@ import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.project.repository.ProjectRepository
 import io.waggle.waggleapiserver.domain.user.User
+import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.domain.Page
@@ -30,14 +31,14 @@ class PostService(
     fun createPost(
         request: PostUpsertRequest,
         user: User,
-    ) {
+    ): PostDetailResponse {
         val (projectId, title, content) = request
 
         if (projectId != null) {
             val member =
                 memberRepository.findByUserIdAndProjectId(user.id, projectId)
                     ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-            member.checkMembership(MemberRole.MEMBER)
+            member.checkMemberRole(MemberRole.MEMBER)
         }
 
         val post =
@@ -47,8 +48,9 @@ class PostService(
                 userId = user.id,
                 projectId = projectId,
             )
+        val savedPost = postRepository.save(post)
 
-        postRepository.save(post)
+        return PostDetailResponse.of(savedPost, UserSimpleResponse.from(user))
     }
 
     fun getPosts(
@@ -64,7 +66,7 @@ class PostService(
             val user =
                 userMap[post.userId]
                     ?: throw EntityNotFoundException("User not found: ${post.userId}")
-            PostSimpleResponse.of(post, user)
+            PostSimpleResponse.of(post, UserSimpleResponse.from(user))
         }
     }
 
@@ -75,7 +77,7 @@ class PostService(
         val user =
             userRepository.findByIdOrNull(post.userId)
                 ?: throw EntityNotFoundException("User not found: $post.userId")
-        return PostDetailResponse.of(post, user)
+        return PostDetailResponse.of(post, UserSimpleResponse.from(user))
     }
 
     @Transactional
@@ -83,7 +85,7 @@ class PostService(
         postId: Long,
         request: PostUpsertRequest,
         user: User,
-    ) {
+    ): PostDetailResponse {
         val (projectId, title, content) = request
 
         val post =
@@ -95,10 +97,12 @@ class PostService(
             val member =
                 memberRepository.findByUserIdAndProjectId(user.id, projectId)
                     ?: throw EntityNotFoundException("Member not found: ${user.id}, $projectId")
-            member.checkMembership(MemberRole.MEMBER)
+            member.checkMemberRole(MemberRole.MEMBER)
         }
 
         post.update(title, content, projectId)
+
+        return PostDetailResponse.of(post, UserSimpleResponse.from(user))
     }
 
     @Transactional

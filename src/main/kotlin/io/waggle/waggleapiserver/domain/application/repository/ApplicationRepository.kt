@@ -12,5 +12,7 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
         position: Position,
     ): Boolean
 
+    fun findByProjectId(projectId: Long): List<Application>
+
     fun findByUserId(userId: UUID): List<Application>
 }
