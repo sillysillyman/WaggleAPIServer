@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.domain.project
 import io.waggle.waggleapiserver.common.util.CurrentUser
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
 import io.waggle.waggleapiserver.domain.application.service.ApplicationService
+import io.waggle.waggleapiserver.domain.member.service.MemberService
 import io.waggle.waggleapiserver.domain.project.dto.request.ProjectUpsertRequest
 import io.waggle.waggleapiserver.domain.project.dto.response.ProjectDetailResponse
 import io.waggle.waggleapiserver.domain.project.service.ProjectService
@@ -26,8 +27,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class ProjectController(
     private val applicationService: ApplicationService,
-    private val recruitmentService: RecruitmentService,
+    private val memberService: MemberService,
     private val projectService: ProjectService,
+    private val recruitmentService: RecruitmentService,
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -76,5 +78,14 @@ class ProjectController(
         @CurrentUser user: User,
     ) {
         projectService.deleteProject(projectId, user)
+    }
+
+    @DeleteMapping("/{projectId}/members")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun leaveProject(
+        @PathVariable projectId: Long,
+        @CurrentUser user: User,
+    ) {
+        memberService.leaveProject(projectId, user)
     }
 }
