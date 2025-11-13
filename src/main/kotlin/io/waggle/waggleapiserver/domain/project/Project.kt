@@ -24,6 +24,8 @@ class Project(
     var name: String,
     @Column(nullable = false)
     var description: String,
+    @Column(name = "thumbnail_url")
+    var thumbnailUrl: String? = null,
     @Column(name = "leader_id", nullable = false)
     var leaderId: UUID,
     @Column(name = "creator_id", nullable = false, updatable = false)
@@ -36,9 +38,11 @@ class Project(
     fun update(
         name: String,
         description: String,
+        thumbnailUrl: String?,
     ) {
         this.name = name
         this.description = description
+        this.thumbnailUrl = thumbnailUrl
     }
 
     fun isLeader(userId: UUID) = leaderId == userId

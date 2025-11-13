@@ -28,7 +28,7 @@ class ProjectService(
         request: ProjectUpsertRequest,
         user: User,
     ): ProjectDetailResponse {
-        val (name, description) = request
+        val (name, description, thumbnailUrl) = request
 
         if (projectRepository.existsByName(name)) {
             throw DuplicateKeyException("Already exists project name: $name")
@@ -38,6 +38,7 @@ class ProjectService(
             Project(
                 name = name,
                 description = description,
+                thumbnailUrl = thumbnailUrl,
                 leaderId = user.id,
                 creatorId = user.id,
             )
@@ -89,7 +90,7 @@ class ProjectService(
             projectRepository.findByIdOrNull(projectId)
                 ?: throw EntityNotFoundException("Project not found: $projectId")
 
-        val (name, description) = request
+        val (name, description, thumbnailUrl) = request
 
         if (name != project.name && projectRepository.existsByName(name)) {
             throw DuplicateKeyException("Already exists project name: $name")
@@ -98,6 +99,7 @@ class ProjectService(
         project.update(
             name = name,
             description = description,
+            thumbnailUrl = thumbnailUrl,
         )
 
         val members = memberRepository.findByProjectIdOrderByCreatedAtAsc(projectId)
