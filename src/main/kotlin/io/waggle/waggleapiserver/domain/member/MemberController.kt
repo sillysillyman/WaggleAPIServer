@@ -26,8 +26,8 @@ class MemberController(
         @CurrentUser user: User,
     ): MemberResponse = memberService.updateMemberRole(memberId, request, user)
 
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{memberId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun removeMember(
         @PathVariable memberId: Long,
         @CurrentUser user: User,
