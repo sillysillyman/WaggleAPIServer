@@ -66,11 +66,32 @@ class MemberService(
         member.delete()
     }
 
+    @Transactional
+    fun removeMember(
+        memberId: Long,
+        user: User,
+    ) {
+        val member =
+            memberRepository.findByIdOrNull(memberId)
+                ?: throw EntityNotFoundException("Member not found: $memberId")
+
+        val project =
+            projectRepository.findByIdOrNull(member.projectId)
+                ?: throw EntityNotFoundException("Project Not Found: ${member.projectId}")
+
+        val leader =
+            memberRepository.findByUserIdAndProjectId(user.id, project.id)
+                ?: throw EntityNotFoundException("Member not found")
+        check(leader.isLeader) { "Only leader can remove member" }
+
+        member.delete()
+    }
+
     private fun delegateLeader(
         member: Member,
         leader: Member,
     ) {
-        require(leader.isLeader) { "Only leader can delegate authority" }
+        check(leader.isLeader) { "Only leader can delegate authority" }
         require(member.projectId == leader.projectId) { "Not in the same project" }
 
         val project =

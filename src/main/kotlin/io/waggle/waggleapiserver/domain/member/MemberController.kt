@@ -5,10 +5,13 @@ import io.waggle.waggleapiserver.domain.member.dto.request.MemberUpdateRoleReque
 import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.service.MemberService
 import io.waggle.waggleapiserver.domain.user.User
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @RequestMapping("/members")
@@ -22,4 +25,13 @@ class MemberController(
         @RequestBody request: MemberUpdateRoleRequest,
         @CurrentUser user: User,
     ): MemberResponse = memberService.updateMemberRole(memberId, request, user)
+
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{memberId}")
+    fun removeMember(
+        @PathVariable memberId: Long,
+        @CurrentUser user: User,
+    ) {
+        memberService.removeMember(memberId, user)
+    }
 }
