@@ -22,10 +22,6 @@ spring:
       port: 6379
       password: ${REDIS_PASSWORD}
 
-app:
-  oauth2:
-    redirect-uri: http://localhost:3000/oauth/callback
-
 logging:
   level:
     root: INFO
