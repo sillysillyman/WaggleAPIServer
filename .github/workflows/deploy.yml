@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - main
+      - dev
 
 jobs:
-  deploy:
+  deploy-prod:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to EC2
+      - name: Deploy to Production
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -18,3 +19,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             /opt/waggle/deploy.sh
+
+  deploy-dev:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Development
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            /opt/waggle-dev/deploy.sh
