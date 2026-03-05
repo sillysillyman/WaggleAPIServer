@@ -79,7 +79,13 @@ class PostService(
         user: User?,
         pageable: Pageable,
     ): Page<PostDetailResponse> {
-        val posts = postRepository.findWithFilter(query.q, pageable)
+        val posts =
+            postRepository.findWithFilter(
+                q = query.q,
+                positions = query.positions ?: emptySet(),
+                skills = query.skills ?: emptySet(),
+                pageable = pageable,
+            )
 
         val authorIds = posts.content.map { it.userId }.distinct()
         val authorById = userRepository.findAllById(authorIds).associateBy { it.id }
