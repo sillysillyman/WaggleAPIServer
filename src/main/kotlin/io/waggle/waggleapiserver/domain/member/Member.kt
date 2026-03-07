@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.domain.member
 import io.waggle.waggleapiserver.common.AuditingEntity
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
+import io.waggle.waggleapiserver.domain.user.enums.Position
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -28,6 +29,9 @@ class Member(
     val userId: UUID,
     @Column(name = "team_id", nullable = false, updatable = false)
     val teamId: Long,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20)")
+    var position: Position,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(10)")
     var role: MemberRole = MemberRole.MEMBER,

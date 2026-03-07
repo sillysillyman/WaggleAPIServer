@@ -18,7 +18,7 @@ import io.waggle.waggleapiserver.domain.memberreview.enums.ReviewQueryType
 import io.waggle.waggleapiserver.domain.memberreview.service.MemberReviewService
 import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationResponse
 import io.waggle.waggleapiserver.domain.notification.service.NotificationService
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamSimpleResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.user.dto.request.MemberUpdateVisibilityRequest
 import io.waggle.waggleapiserver.domain.user.dto.request.UserSetupProfileRequest
 import io.waggle.waggleapiserver.domain.user.dto.request.UserUpdateRequest
@@ -104,7 +104,7 @@ class UserController(
     @GetMapping("/{userId}/teams")
     fun getUserTeams(
         @PathVariable userId: UUID,
-    ): List<TeamSimpleResponse> = userService.getUserTeams(userId, includeHidden = false)
+    ): List<TeamResponse> = userService.getUserTeams(userId, includeHidden = false)
 
     @Operation(summary = "본인 프로필 조회")
     @GetMapping("/me")
@@ -174,7 +174,7 @@ class UserController(
     @GetMapping("/me/teams")
     fun getMyTeams(
         @CurrentUser user: User,
-    ): List<TeamSimpleResponse> = userService.getUserTeams(user.id, includeHidden = true)
+    ): List<TeamResponse> = userService.getUserTeams(user.id, includeHidden = true)
 
     @Operation(summary = "본인 팀 공개/비공개 설정")
     @PatchMapping("/me/teams/{teamId}/visibility")
@@ -182,7 +182,7 @@ class UserController(
         @PathVariable teamId: Long,
         @Valid @RequestBody request: MemberUpdateVisibilityRequest,
         @CurrentUser user: User,
-    ): TeamSimpleResponse = userService.updateTeamVisibility(user.id, teamId, request.isVisible)
+    ): TeamResponse = userService.updateTeamVisibility(user.id, teamId, request.isVisible)
 
     @Operation(summary = "본인 프로필 수정")
     @PutMapping("/me")

@@ -9,7 +9,7 @@ import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlRespons
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.memberreview.enums.ReviewType
 import io.waggle.waggleapiserver.domain.memberreview.repository.MemberReviewRepository
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamSimpleResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.TemperatureCalculator
 import io.waggle.waggleapiserver.domain.user.User
@@ -108,7 +108,7 @@ class UserService(
     fun getUserTeams(
         userId: UUID,
         includeHidden: Boolean = false,
-    ): List<TeamSimpleResponse> {
+    ): List<TeamResponse> {
         val members =
             if (includeHidden) {
                 memberRepository.findByUserIdOrderByRoleAscCreatedAtAsc(userId)
@@ -121,8 +121,12 @@ class UserService(
 
         return members.mapNotNull { member ->
             teamById[member.teamId]?.let { team ->
-                TeamSimpleResponse.from(
+                val memberCount = memberRepository.countByTeamId(team.id)
+                TeamResponse.of(
                     team = team,
+                    memberCount = memberCount,
+                    position = if (includeHidden) member.position else null,
+                    role = if (includeHidden) member.role else null,
                     isVisible = if (includeHidden) member.isVisible else null,
                 )
             }
@@ -136,7 +140,7 @@ class UserService(
         userId: UUID,
         teamId: Long,
         isVisible: Boolean,
-    ): TeamSimpleResponse {
+    ): TeamResponse {
         val member =
             memberRepository.findByUserIdAndTeamId(userId, teamId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
@@ -147,7 +151,15 @@ class UserService(
             teamRepository.findByIdOrNull(teamId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Team not found")
 
-        return TeamSimpleResponse.from(team, isVisible)
+        val memberCount = memberRepository.countByTeamId(teamId)
+
+        return TeamResponse.of(
+            team = team,
+            memberCount = memberCount,
+            position = member.position,
+            role = member.role,
+            isVisible = isVisible,
+        )
     }
 
     @Transactional

@@ -6,7 +6,7 @@ import io.waggle.waggleapiserver.domain.notification.Notification
 import io.waggle.waggleapiserver.domain.notification.dto.request.NotificationCreateRequest
 import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationResponse
 import io.waggle.waggleapiserver.domain.notification.repository.NotificationRepository
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamSimpleResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
@@ -49,7 +49,7 @@ class NotificationService(
         val teamById = teamRepository.findAllById(teamIds).associateBy { it.id }
 
         return notifications.map { notification ->
-            val team = notification.teamId?.let { teamById[it] }?.let(TeamSimpleResponse::from)
+            val team = notification.teamId?.let { teamById[it] }?.let(TeamResponse::of)
 
             NotificationResponse.of(
                 notification = notification,
