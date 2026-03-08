@@ -1,5 +1,7 @@
 package io.waggle.waggleapiserver.domain.bookmark.service
 
+import io.waggle.waggleapiserver.common.exception.BusinessException
+import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.domain.bookmark.Bookmark
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkId
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
@@ -8,7 +10,7 @@ import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkToggleResponse
 import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
-import io.waggle.waggleapiserver.domain.post.dto.response.PostDetailResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.recruitment.dto.response.RecruitmentResponse
 import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentRepository
@@ -16,6 +18,7 @@ import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
+import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -27,6 +30,7 @@ class BookmarkService(
     private val postRepository: PostRepository,
     private val recruitmentRepository: RecruitmentRepository,
     private val teamRepository: TeamRepository,
+    private val userRepository: UserRepository,
 ) {
     fun toggleBookmark(
         request: BookmarkToggleRequest,
@@ -62,15 +66,27 @@ class BookmarkService(
         return when (type) {
             BookmarkType.POST -> {
                 val posts = postRepository.findByIdInOrderByCreatedAtDesc(targetIds)
+                val authorIds = posts.map { it.userId }.distinct()
+                val authorById = userRepository.findAllById(authorIds).associateBy { it.id }
                 val recruitmentsByPostId =
                     recruitmentRepository.findByPostIdIn(posts.map { it.id }).groupBy { it.postId }
                 posts.map { post ->
+                    val author =
+                        authorById[post.userId]
+                            ?: throw BusinessException(
+                                ErrorCode.ENTITY_NOT_FOUND,
+                                "User not found: ${post.userId}",
+                            )
                     val recruitments =
                         (
                             recruitmentsByPostId[post.id]
                                 ?: emptyList()
                         ).map { RecruitmentResponse.from(it) }
-                    PostDetailResponse.of(post, UserSimpleResponse.from(user), recruitments)
+                    PostSimpleResponse.of(
+                        post,
+                        UserSimpleResponse.from(author),
+                        recruitments,
+                    )
                 }
             }
 
