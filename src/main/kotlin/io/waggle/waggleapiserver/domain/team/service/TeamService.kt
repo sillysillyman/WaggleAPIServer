@@ -12,7 +12,7 @@ import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.team.Team
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamUpsertRequest
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamDetailResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
@@ -34,7 +34,7 @@ class TeamService(
     fun createTeam(
         request: TeamUpsertRequest,
         user: User,
-    ): TeamDetailResponse {
+    ): TeamResponse {
         val (name, description, workMode, profileImageUrl) = request
 
         if (teamRepository.existsByName(name)) {
@@ -64,9 +64,11 @@ class TeamService(
                 role = MemberRole.LEADER,
             )
 
-        val savedMember = memberRepository.save(member)
+        memberRepository.save(member)
 
-        return TeamDetailResponse.of(savedTeam, listOf(MemberResponse.of(savedMember, user)))
+        val memberCount = memberRepository.countByTeamId(savedTeam.id)
+
+        return TeamResponse.of(savedTeam, memberCount)
     }
 
     fun generateProfileImagePresignedUrl(request: PresignedUrlRequest): PresignedUrlResponse {
@@ -78,25 +80,28 @@ class TeamService(
         return PresignedUrlResponse.from(presignedUploadUrl)
     }
 
-    fun getTeam(teamId: Long): TeamDetailResponse {
+    fun getTeam(teamId: Long): TeamResponse {
         val team =
             teamRepository.findByIdOrNull(teamId)
                 ?: throw BusinessException(
                     ErrorCode.ENTITY_NOT_FOUND,
                     "Team not found: $teamId",
                 )
+        val memberCount = memberRepository.countByTeamId(teamId)
+
+        return TeamResponse.of(team, memberCount)
+    }
+
+    fun getTeamMembers(teamId: Long): List<MemberResponse> {
         val members = memberRepository.findByTeamIdOrderByRoleAscCreatedAtAsc(teamId)
         val userById = userRepository.findAllById(members.map { it.userId }).associateBy { it.id }
 
-        return TeamDetailResponse.of(
-            team,
-            members.map {
-                MemberResponse.of(
-                    it,
-                    userById[it.userId]!!,
-                )
-            },
-        )
+        return members.map {
+            MemberResponse.of(
+                it,
+                userById[it.userId]!!,
+            )
+        }
     }
 
     @Transactional
@@ -104,7 +109,7 @@ class TeamService(
         teamId: Long,
         request: TeamUpsertRequest,
         user: User,
-    ): TeamDetailResponse {
+    ): TeamResponse {
         val member =
             memberRepository.findByUserIdAndTeamId(user.id, teamId)
                 ?: throw BusinessException(
@@ -144,18 +149,9 @@ class TeamService(
             profileImageUrl = profileImageUrl,
         )
 
-        val members = memberRepository.findByTeamIdOrderByRoleAscCreatedAtAsc(teamId)
-        val userById = userRepository.findAllById(members.map { it.userId }).associateBy { it.id }
+        val memberCount = memberRepository.countByTeamId(teamId)
 
-        return TeamDetailResponse.of(
-            team,
-            members.map {
-                MemberResponse.of(
-                    it,
-                    userById[it.userId]!!,
-                )
-            },
-        )
+        return TeamResponse.of(team, memberCount)
     }
 
     @Transactional

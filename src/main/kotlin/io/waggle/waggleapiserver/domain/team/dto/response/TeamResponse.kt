@@ -7,6 +7,7 @@ import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.team.Team
 import io.waggle.waggleapiserver.domain.team.enums.TeamStatus
+import io.waggle.waggleapiserver.domain.team.enums.WorkMode
 import io.waggle.waggleapiserver.domain.user.enums.Position
 import java.time.Instant
 
@@ -20,6 +21,8 @@ data class TeamResponse(
     val description: String,
     @Schema(description = "팀 상태", example = "ACTIVE")
     val status: TeamStatus,
+    @Schema(description = "진행 방식", example = "ONLINE")
+    val workMode: WorkMode,
     @Schema(
         description = "프로필 이미지 URL",
         example = "https://waggle-server.s3.ap-northeast-2.amazonaws.com/prod/teams/6df573f0-9e2e-46b5-ba7f-7d2d2873684b.png",
@@ -54,6 +57,7 @@ data class TeamResponse(
             name = team.name,
             description = team.description,
             status = team.status,
+            workMode = team.workMode,
             profileImageUrl = team.profileImageUrl,
             memberCount = memberCount,
             position = position,
