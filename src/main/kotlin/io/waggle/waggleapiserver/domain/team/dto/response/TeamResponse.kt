@@ -1,11 +1,13 @@
 package io.waggle.waggleapiserver.domain.team.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.team.Team
 import io.waggle.waggleapiserver.domain.team.enums.TeamStatus
+import io.waggle.waggleapiserver.domain.team.enums.WorkMode
 import io.waggle.waggleapiserver.domain.user.enums.Position
 import java.time.Instant
 
@@ -19,6 +21,8 @@ data class TeamResponse(
     val description: String,
     @Schema(description = "팀 상태", example = "ACTIVE")
     val status: TeamStatus,
+    @Schema(description = "진행 방식", example = "ONLINE")
+    val workMode: WorkMode,
     @Schema(
         description = "프로필 이미지 URL",
         example = "https://waggle-server.s3.ap-northeast-2.amazonaws.com/prod/teams/6df573f0-9e2e-46b5-ba7f-7d2d2873684b.png",
@@ -33,8 +37,9 @@ data class TeamResponse(
     @Schema(description = "팀 내 본인 역할 (본인 조회 시에만)", example = "LEADER")
     val role: MemberRole? = null,
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("isVisible")
     @Schema(description = "프로필 공개 여부 (본인 조회 시에만)", example = "true")
-    val isVisible: Boolean? = null,
+    val visible: Boolean? = null,
     @Schema(description = "팀 생성일시", example = "2025-11-16T12:30:45.123456Z")
     val createdAt: Instant,
     @Schema(description = "팀 수정일시", example = "2025-11-16T12:30:45.123456Z")
@@ -46,17 +51,18 @@ data class TeamResponse(
             memberCount: Int,
             position: Position? = null,
             role: MemberRole? = null,
-            isVisible: Boolean? = null,
+            visible: Boolean? = null,
         ) = TeamResponse(
             teamId = team.id,
             name = team.name,
             description = team.description,
             status = team.status,
+            workMode = team.workMode,
             profileImageUrl = team.profileImageUrl,
             memberCount = memberCount,
             position = position,
             role = role,
-            isVisible = isVisible,
+            visible = visible,
             createdAt = team.createdAt,
             updatedAt = team.updatedAt,
         )

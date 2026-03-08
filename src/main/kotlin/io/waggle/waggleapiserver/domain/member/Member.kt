@@ -36,7 +36,7 @@ class Member(
     @Column(nullable = false, columnDefinition = "VARCHAR(10)")
     var role: MemberRole = MemberRole.MEMBER,
     @Column(name = "is_visible", nullable = false)
-    var isVisible: Boolean = true,
+    var visible: Boolean = true,
 ) : AuditingEntity() {
     val isLeader: Boolean
         get() = this.role == MemberRole.LEADER
@@ -45,8 +45,8 @@ class Member(
         this.role = role
     }
 
-    fun updateVisibility(isVisible: Boolean) {
-        this.isVisible = isVisible
+    fun updateVisibility(visible: Boolean) {
+        this.visible = visible
     }
 
     fun checkMemberRole(requiredRole: MemberRole) {

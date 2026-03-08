@@ -7,7 +7,7 @@ import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.enums.Position
 import io.waggle.waggleapiserver.domain.user.enums.Skill
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 @Schema(description = "사용자 프로필 응답 DTO")
 data class UserProfileResponse(

@@ -182,7 +182,7 @@ class UserController(
         @PathVariable teamId: Long,
         @Valid @RequestBody request: MemberUpdateVisibilityRequest,
         @CurrentUser user: User,
-    ): TeamResponse = userService.updateTeamVisibility(user.id, teamId, request.isVisible)
+    ): TeamResponse = userService.updateTeamVisibility(user.id, teamId, request)
 
     @Operation(summary = "본인 프로필 수정")
     @PutMapping("/me")

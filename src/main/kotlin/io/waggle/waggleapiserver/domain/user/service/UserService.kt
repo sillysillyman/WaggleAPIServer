@@ -13,6 +13,7 @@ import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.TemperatureCalculator
 import io.waggle.waggleapiserver.domain.user.User
+import io.waggle.waggleapiserver.domain.user.dto.request.MemberUpdateVisibilityRequest
 import io.waggle.waggleapiserver.domain.user.dto.request.UserSetupProfileRequest
 import io.waggle.waggleapiserver.domain.user.dto.request.UserUpdateRequest
 import io.waggle.waggleapiserver.domain.user.dto.response.UserCheckUsernameResponse
@@ -113,7 +114,7 @@ class UserService(
             if (includeHidden) {
                 memberRepository.findByUserIdOrderByRoleAscCreatedAtAsc(userId)
             } else {
-                memberRepository.findByUserIdAndIsVisibleTrueOrderByRoleAscCreatedAtAsc(userId)
+                memberRepository.findByUserIdAndVisibleTrueOrderByRoleAscCreatedAtAsc(userId)
             }
 
         val teamIds = members.map { it.teamId }
@@ -127,25 +128,27 @@ class UserService(
                     memberCount = memberCount,
                     position = if (includeHidden) member.position else null,
                     role = if (includeHidden) member.role else null,
-                    isVisible = if (includeHidden) member.isVisible else null,
+                    visible = if (includeHidden) member.visible else null,
                 )
             }
         }
     }
 
-    fun getUserProfileCompletion(user: User): UserProfileCompletionResponse = UserProfileCompletionResponse(user.isProfileComplete())
+    fun getUserProfileCompletion(user: User): UserProfileCompletionResponse =
+        UserProfileCompletionResponse(isComplete = user.isProfileComplete())
 
     @Transactional
     fun updateTeamVisibility(
         userId: UUID,
         teamId: Long,
-        isVisible: Boolean,
+        request: MemberUpdateVisibilityRequest,
     ): TeamResponse {
         val member =
             memberRepository.findByUserIdAndTeamId(userId, teamId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
 
-        member.updateVisibility(isVisible)
+        val (visible) = request
+        member.updateVisibility(visible)
 
         val team =
             teamRepository.findByIdOrNull(teamId)
@@ -158,7 +161,7 @@ class UserService(
             memberCount = memberCount,
             position = member.position,
             role = member.role,
-            isVisible = isVisible,
+            visible = visible,
         )
     }
 

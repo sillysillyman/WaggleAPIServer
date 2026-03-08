@@ -11,10 +11,13 @@ import io.waggle.waggleapiserver.domain.post.Post
 import io.waggle.waggleapiserver.domain.post.dto.request.PostGetQuery
 import io.waggle.waggleapiserver.domain.post.dto.request.PostUpsertRequest
 import io.waggle.waggleapiserver.domain.post.dto.response.PostDetailResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.recruitment.Recruitment
 import io.waggle.waggleapiserver.domain.recruitment.dto.response.RecruitmentResponse
 import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentRepository
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
+import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
@@ -30,6 +33,7 @@ class PostService(
     private val memberRepository: MemberRepository,
     private val postRepository: PostRepository,
     private val recruitmentRepository: RecruitmentRepository,
+    private val teamRepository: TeamRepository,
     private val userRepository: UserRepository,
 ) {
     @Transactional
@@ -68,9 +72,15 @@ class PostService(
                 },
             )
 
+        val team =
+            teamRepository.findByIdOrNull(teamId)
+                ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Team not found: $teamId")
+        val memberCount = memberRepository.countByTeamId(teamId)
+
         return PostDetailResponse.of(
             savedPost,
             UserSimpleResponse.from(user),
+            TeamResponse.of(team, memberCount),
             savedRecruitments.map { RecruitmentResponse.from(it) },
         )
     }
@@ -79,13 +89,14 @@ class PostService(
         query: PostGetQuery,
         cursorQuery: CursorGetQuery,
         user: User?,
-    ): CursorResponse<PostDetailResponse> {
+    ): CursorResponse<PostSimpleResponse> {
         val posts =
             postRepository.findWithFilter(
                 cursor = cursorQuery.cursor,
                 q = query.q,
                 positions = query.positions ?: emptySet(),
                 skills = query.skills ?: emptySet(),
+                sort = query.sort,
                 pageable = PageRequest.of(0, cursorQuery.size + 1),
             )
 
@@ -130,7 +141,7 @@ class PostService(
                     (recruitmentsByPostId[post.id] ?: emptyList()).map { RecruitmentResponse.from(it) }
                 val applicantCount =
                     if (post.teamId in memberTeamIdSet) applicantCountByPostId[post.id] ?: 0 else null
-                PostDetailResponse.of(
+                PostSimpleResponse.of(
                     post,
                     UserSimpleResponse.from(author),
                     recruitments,
@@ -156,7 +167,13 @@ class PostService(
             userRepository.findByIdOrNull(post.userId)
                 ?: throw BusinessException(
                     ErrorCode.ENTITY_NOT_FOUND,
-                    "User not found: $post.userId",
+                    "User not found: ${post.userId}",
+                )
+        val team =
+            teamRepository.findByIdOrNull(post.teamId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Team not found: ${post.teamId}",
                 )
         val recruitments =
             recruitmentRepository.findByPostId(postId).map { RecruitmentResponse.from(it) }
@@ -170,9 +187,12 @@ class PostService(
                 }
             }
 
+        val memberCount = memberRepository.countByTeamId(team.id)
+
         return PostDetailResponse.of(
             post,
             UserSimpleResponse.from(author),
+            TeamResponse.of(team, memberCount),
             recruitments,
             applicantCount,
         )
@@ -181,7 +201,7 @@ class PostService(
     fun getTeamPosts(
         teamId: Long,
         user: User?,
-    ): List<PostDetailResponse> {
+    ): List<PostSimpleResponse> {
         val posts = postRepository.findByTeamIdOrderByCreatedAtDesc(teamId)
 
         val authorIds = posts.map { it.userId }.distinct()
@@ -213,7 +233,7 @@ class PostService(
             val recruitments =
                 (recruitmentsByPostId[post.id] ?: emptyList()).map { RecruitmentResponse.from(it) }
             val applicantCount = if (isMember) applicantCountByPostId[post.id] ?: 0 else null
-            PostDetailResponse.of(
+            PostSimpleResponse.of(
                 post,
                 UserSimpleResponse.from(author),
                 recruitments,
@@ -252,9 +272,18 @@ class PostService(
                 },
             )
 
+        val team =
+            teamRepository.findByIdOrNull(post.teamId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Team not found: ${post.teamId}",
+                )
+        val memberCount = memberRepository.countByTeamId(post.teamId)
+
         return PostDetailResponse.of(
             post,
             UserSimpleResponse.from(user),
+            TeamResponse.of(team, memberCount),
             savedRecruitments.map { RecruitmentResponse.from(it) },
         )
     }

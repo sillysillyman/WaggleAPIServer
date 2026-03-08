@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.domain.user.dto.response
 import io.swagger.v3.oas.annotations.media.Schema
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.enums.Position
+import io.waggle.waggleapiserver.domain.user.enums.Skill
 import java.time.Instant
 import java.util.UUID
 
@@ -21,6 +22,8 @@ data class UserSimpleResponse(
     val profileImageUrl: String?,
     @Schema(description = "직무", example = "BACKEND")
     val position: Position,
+    @Schema(description = "보유 스킬", example = "[\"JAVA\", \"SPRING\"]")
+    val skills: Set<Skill>,
     @Schema(description = "사용자 생성일시", example = "2025-11-16T12:30:45.123456Z")
     val createdAt: Instant,
     @Schema(description = "사용자 수정일시", example = "2025-11-16T12:30:45.123456Z")
@@ -34,6 +37,7 @@ data class UserSimpleResponse(
                 user.email,
                 user.profileImageUrl,
                 user.position!!,
+                user.skills,
                 user.createdAt,
                 user.updatedAt,
             )

@@ -10,10 +10,11 @@ import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreat
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
 import io.waggle.waggleapiserver.domain.application.service.ApplicationService
 import io.waggle.waggleapiserver.domain.member.service.MemberService
-import io.waggle.waggleapiserver.domain.post.dto.response.PostDetailResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
+import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.post.service.PostService
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamUpsertRequest
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamDetailResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.service.TeamService
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.validation.Valid
@@ -43,7 +44,7 @@ class TeamController(
     fun createTeam(
         @Valid @RequestBody request: TeamUpsertRequest,
         @CurrentUser user: User,
-    ): TeamDetailResponse = teamService.createTeam(request, user)
+    ): TeamResponse = teamService.createTeam(request, user)
 
     @Operation(
         summary = "팀 지원",
@@ -68,7 +69,13 @@ class TeamController(
     @GetMapping("/{teamId}")
     fun getTeam(
         @PathVariable teamId: Long,
-    ): TeamDetailResponse = teamService.getTeam(teamId)
+    ): TeamResponse = teamService.getTeam(teamId)
+
+    @Operation(summary = "팀 멤버 목록 조회")
+    @GetMapping("/{teamId}/members")
+    fun getTeamMembers(
+        @PathVariable teamId: Long,
+    ): List<MemberResponse> = teamService.getTeamMembers(teamId)
 
     @Operation(
         summary = "팀 지원 목록 조회",
@@ -86,7 +93,7 @@ class TeamController(
     fun getTeamPosts(
         @PathVariable teamId: Long,
         @CurrentUser user: User?,
-    ): List<PostDetailResponse> = postService.getTeamPosts(teamId, user)
+    ): List<PostSimpleResponse> = postService.getTeamPosts(teamId, user)
 
     @Operation(summary = "팀 수정")
     @PutMapping("/{teamId}")
@@ -94,7 +101,7 @@ class TeamController(
         @PathVariable teamId: Long,
         @Valid @RequestBody request: TeamUpsertRequest,
         @CurrentUser user: User,
-    ): TeamDetailResponse = teamService.updateTeam(teamId, request, user)
+    ): TeamResponse = teamService.updateTeam(teamId, request, user)
 
     @Operation(summary = "팀 삭제")
     @DeleteMapping("/{teamId}")
