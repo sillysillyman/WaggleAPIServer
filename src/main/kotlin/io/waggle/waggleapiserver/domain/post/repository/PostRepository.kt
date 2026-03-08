@@ -13,8 +13,8 @@ interface PostRepository : JpaRepository<Post, Long> {
         """
         SELECT p FROM Post p
         WHERE (
-            (:sort = 'NEWEST' AND (:cursor IS NULL OR p.id < :cursor))
-            OR (:sort = 'OLDEST' AND (:cursor IS NULL OR p.id > :cursor))
+            (:#{#sort.name()} = 'NEWEST' AND (:cursor IS NULL OR p.id < :cursor))
+            OR (:#{#sort.name()} = 'OLDEST' AND (:cursor IS NULL OR p.id > :cursor))
         )
         AND (:q IS NULL OR p.title LIKE CONCAT('%', :q, '%'))
         AND (:#{#positions.empty} = true OR p.id IN (
@@ -24,8 +24,8 @@ interface PostRepository : JpaRepository<Post, Long> {
             SELECT r2.postId FROM Recruitment r2 JOIN r2.skills s WHERE s IN :skills
         ))
         ORDER BY
-            CASE WHEN :sort = 'NEWEST' THEN p.id END DESC,
-            CASE WHEN :sort = 'OLDEST' THEN p.id END ASC
+            CASE WHEN :#{#sort.name()} = 'NEWEST' THEN p.id END DESC,
+            CASE WHEN :#{#sort.name()} = 'OLDEST' THEN p.id END ASC
         """,
     )
     fun findWithFilter(
