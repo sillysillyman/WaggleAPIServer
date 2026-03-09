@@ -2,6 +2,8 @@ package io.waggle.waggleapiserver.domain.team
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
+import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.AllowIncompleteProfile
 import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.CurrentUser
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
@@ -18,6 +20,7 @@ import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.service.TeamService
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -86,8 +89,9 @@ class TeamController(
     fun getTeamApplications(
         @PathVariable teamId: Long,
         @RequestParam(required = false) postId: Long?,
+        @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
-    ): List<ApplicationResponse> = applicationService.getTeamApplications(teamId, postId, user)
+    ): CursorResponse<ApplicationResponse> = applicationService.getTeamApplications(teamId, postId, cursorQuery, user)
 
     @AllowIncompleteProfile
     @Operation(summary = "팀 모집글 목록 조회")

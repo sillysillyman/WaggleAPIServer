@@ -1,5 +1,7 @@
 package io.waggle.waggleapiserver.domain.application.service
 
+import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
+import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.domain.application.Application
@@ -17,6 +19,7 @@ import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentReposi
 import io.waggle.waggleapiserver.domain.user.TemperatureCalculator
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -107,30 +110,38 @@ class ApplicationService(
     fun getTeamApplications(
         teamId: Long,
         postId: Long?,
+        cursorQuery: CursorGetQuery,
         user: User,
-    ): List<ApplicationResponse> {
+    ): CursorResponse<ApplicationResponse> {
         val member =
             memberRepository.findByUserIdAndTeamId(user.id, teamId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
         member.checkMemberRole(MemberRole.MEMBER)
 
+        val pageable = PageRequest.of(0, cursorQuery.size + 1)
         val applications =
             if (postId != null) {
                 val post =
                     postRepository.findByIdOrNull(postId)
-                        ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Post not found: $postId")
+                        ?: throw BusinessException(
+                            ErrorCode.ENTITY_NOT_FOUND,
+                            "Post not found: $postId",
+                        )
                 if (post.teamId != teamId) {
                     throw BusinessException(
                         ErrorCode.INVALID_INPUT_VALUE,
                         "Post $postId does not belong to team $teamId",
                     )
                 }
-                applicationRepository.findByPostId(postId)
+                applicationRepository.findByPostIdWithCursor(postId, cursorQuery.cursor, pageable)
             } else {
-                applicationRepository.findByTeamId(teamId)
+                applicationRepository.findByTeamIdWithCursor(teamId, cursorQuery.cursor, pageable)
             }
 
-        val applicantIds = applications.map { it.userId }.distinct()
+        val hasNext = applications.size > cursorQuery.size
+        val slicedApplications = if (hasNext) applications.take(cursorQuery.size) else applications
+
+        val applicantIds = slicedApplications.map { it.userId }.distinct()
         val applicantById = userRepository.findAllById(applicantIds).associateBy { it.id }
 
         val reviewCounts = memberReviewRepository.countByRevieweeIdInGroupByType(applicantIds)
@@ -145,15 +156,22 @@ class ApplicationService(
                 temperatureCalculator.calculate(likeCount, dislikeCount)
             }
 
-        return applications.map { application ->
-            val applicant =
-                applicantById[application.userId]
-                    ?: throw BusinessException(
-                        ErrorCode.ENTITY_NOT_FOUND,
-                        "User not found: ${application.userId}",
-                    )
-            ApplicationResponse.of(application, applicant, temperatureByUserId[applicant.id]!!)
-        }
+        val data =
+            slicedApplications.map { application ->
+                val applicant =
+                    applicantById[application.userId]
+                        ?: throw BusinessException(
+                            ErrorCode.ENTITY_NOT_FOUND,
+                            "User not found: ${application.userId}",
+                        )
+                ApplicationResponse.of(application, applicant, temperatureByUserId[applicant.id]!!)
+            }
+
+        return CursorResponse(
+            data = data,
+            nextCursor = if (hasNext) slicedApplications.lastOrNull()?.id else null,
+            hasNext = hasNext,
+        )
     }
 
     @Transactional

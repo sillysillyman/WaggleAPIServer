@@ -2,8 +2,10 @@ package io.waggle.waggleapiserver.domain.application.repository
 
 import io.waggle.waggleapiserver.domain.application.Application
 import io.waggle.waggleapiserver.domain.user.enums.Position
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface ApplicationRepository : JpaRepository<Application, Long> {
@@ -23,6 +25,30 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
     fun findByUserId(userId: UUID): List<Application>
 
     fun findByPostId(postId: Long): List<Application>
+
+    @Query("""
+        SELECT a FROM Application a
+        WHERE a.teamId = :teamId
+        AND (:cursor IS NULL OR a.id < :cursor)
+        ORDER BY a.id DESC
+    """)
+    fun findByTeamIdWithCursor(
+        @Param("teamId") teamId: Long,
+        @Param("cursor") cursor: Long?,
+        pageable: Pageable,
+    ): List<Application>
+
+    @Query("""
+        SELECT a FROM Application a
+        WHERE a.postId = :postId
+        AND (:cursor IS NULL OR a.id < :cursor)
+        ORDER BY a.id DESC
+    """)
+    fun findByPostIdWithCursor(
+        @Param("postId") postId: Long,
+        @Param("cursor") cursor: Long?,
+        pageable: Pageable,
+    ): List<Application>
 
     fun countByPostId(postId: Long): Int
 
