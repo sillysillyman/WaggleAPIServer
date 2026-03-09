@@ -9,9 +9,9 @@ import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlRespons
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
 import io.waggle.waggleapiserver.domain.application.service.ApplicationService
+import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.service.MemberService
 import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
-import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.post.service.PostService
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamUpsertRequest
 import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -84,8 +85,9 @@ class TeamController(
     @GetMapping("/{teamId}/applications")
     fun getTeamApplications(
         @PathVariable teamId: Long,
+        @RequestParam(required = false) postId: Long?,
         @CurrentUser user: User,
-    ): List<ApplicationResponse> = applicationService.getTeamApplications(teamId, user)
+    ): List<ApplicationResponse> = applicationService.getTeamApplications(teamId, postId, user)
 
     @AllowIncompleteProfile
     @Operation(summary = "팀 모집글 목록 조회")

@@ -22,6 +22,8 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
 
     fun findByUserId(userId: UUID): List<Application>
 
+    fun findByPostId(postId: Long): List<Application>
+
     fun countByPostId(postId: Long): Int
 
     @Query("SELECT a.postId AS postId, COUNT(a) AS applicantCount FROM Application a WHERE a.postId IN :postIds GROUP BY a.postId")

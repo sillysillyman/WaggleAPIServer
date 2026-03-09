@@ -106,6 +106,7 @@ class ApplicationService(
 
     fun getTeamApplications(
         teamId: Long,
+        postId: Long?,
         user: User,
     ): List<ApplicationResponse> {
         val member =
@@ -113,7 +114,22 @@ class ApplicationService(
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
         member.checkMemberRole(MemberRole.MEMBER)
 
-        val applications = applicationRepository.findByTeamId(teamId)
+        val applications =
+            if (postId != null) {
+                val post =
+                    postRepository.findByIdOrNull(postId)
+                        ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Post not found: $postId")
+                if (post.teamId != teamId) {
+                    throw BusinessException(
+                        ErrorCode.INVALID_INPUT_VALUE,
+                        "Post $postId does not belong to team $teamId",
+                    )
+                }
+                applicationRepository.findByPostId(postId)
+            } else {
+                applicationRepository.findByTeamId(teamId)
+            }
+
         val applicantIds = applications.map { it.userId }.distinct()
         val applicantById = userRepository.findAllById(applicantIds).associateBy { it.id }
 
