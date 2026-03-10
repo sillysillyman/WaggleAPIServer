@@ -1,5 +1,6 @@
 package io.waggle.waggleapiserver.domain.application.dto.response
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import io.waggle.waggleapiserver.domain.application.Application
 import io.waggle.waggleapiserver.domain.application.ApplicationStatus
@@ -8,6 +9,7 @@ import io.waggle.waggleapiserver.domain.user.enums.Position
 import java.time.Instant
 import java.util.UUID
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "지원 응답 DTO")
 data class ApplicationResponse(
     @Schema(description = "지원 ID", example = "1")
@@ -20,10 +22,10 @@ data class ApplicationResponse(
     val teamId: Long,
     @Schema(description = "모집글 ID", example = "1")
     val postId: Long,
-    @Schema(description = "지원자 정보")
-    val user: ApplicantResponse,
-    @Schema(description = "읽음 여부", example = "true")
-    val isRead: Boolean,
+    @Schema(description = "지원자 정보 (팀 조회 시에만 포함)")
+    val user: ApplicantResponse? = null,
+    @Schema(description = "읽음 여부 (팀 조회 시에만 포함)", example = "true")
+    val isRead: Boolean? = null,
     @Schema(description = "지원 동기")
     val detail: String?,
     @Schema(
@@ -67,9 +69,9 @@ data class ApplicationResponse(
     companion object {
         fun of(
             application: Application,
-            user: User,
-            temperature: Double,
-            isRead: Boolean = false,
+            user: User? = null,
+            temperature: Double? = null,
+            isRead: Boolean? = null,
         ): ApplicationResponse =
             ApplicationResponse(
                 applicationId = application.id,
@@ -77,7 +79,7 @@ data class ApplicationResponse(
                 status = application.status,
                 teamId = application.teamId,
                 postId = application.postId,
-                user = ApplicantResponse.of(user, temperature),
+                user = if (user != null && temperature != null) ApplicantResponse.of(user, temperature) else null,
                 isRead = isRead,
                 detail = application.detail,
                 portfolioUrls = application.portfolioUrls.toList(),
