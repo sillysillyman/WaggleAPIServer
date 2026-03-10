@@ -11,6 +11,7 @@ import io.waggle.waggleapiserver.domain.team.enums.WorkMode
 import io.waggle.waggleapiserver.domain.user.enums.Position
 import java.time.Instant
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "팀 응답 DTO")
 data class TeamResponse(
     @Schema(description = "팀 ID", example = "1")
@@ -30,13 +31,10 @@ data class TeamResponse(
     val profileImageUrl: String?,
     @Schema(description = "팀 멤버 수", example = "5")
     val memberCount: Int,
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(description = "팀 내 본인 포지션 (본인 조회 시에만)", example = "BACKEND")
     val position: Position? = null,
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(description = "팀 내 본인 역할 (본인 조회 시에만)", example = "LEADER")
     val role: MemberRole? = null,
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("isVisible")
     @Schema(description = "프로필 공개 여부 (본인 조회 시에만)", example = "true")
     val visible: Boolean? = null,
