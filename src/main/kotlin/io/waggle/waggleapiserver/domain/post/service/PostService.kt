@@ -141,24 +141,6 @@ class PostService(
         val recruitmentsByPostId =
             recruitmentRepository.findByPostIdIn(postIds).groupBy { it.postId }
 
-        val memberTeamIdSet =
-            user?.let {
-                memberRepository
-                    .findByUserIdOrderByRoleAscCreatedAtAsc(it.id)
-                    .map { m -> m.teamId }
-                    .toSet()
-            } ?: emptySet()
-
-        val memberPostIds = content.filter { it.teamId in memberTeamIdSet }.map { it.id }
-        val applicantCountByPostId =
-            if (memberPostIds.isNotEmpty()) {
-                applicationRepository
-                    .countApplicantsGroupByPostId(memberPostIds)
-                    .associate { it.postId to it.applicantCount.toInt() }
-            } else {
-                emptyMap()
-            }
-
         val data =
             content.map { post ->
                 val author =
@@ -172,18 +154,10 @@ class PostService(
                         recruitmentsByPostId[post.id]
                             ?: emptyList()
                     ).map { RecruitmentResponse.from(it) }
-                val applicantCount =
-                    if (post.teamId in memberTeamIdSet) {
-                        applicantCountByPostId[post.id]
-                            ?: 0
-                    } else {
-                        null
-                    }
                 PostSimpleResponse.of(
                     post,
                     UserSimpleResponse.of(author, temperatureByUserId[author.id]!!),
                     recruitments,
-                    applicantCount,
                 )
             }
 
@@ -216,15 +190,6 @@ class PostService(
         val recruitments =
             recruitmentRepository.findByPostId(postId).map { RecruitmentResponse.from(it) }
 
-        val applicantCount =
-            user?.let {
-                if (memberRepository.existsByUserIdAndTeamId(it.id, post.teamId)) {
-                    applicationRepository.countByPostId(postId)
-                } else {
-                    null
-                }
-            }
-
         val memberCount = memberRepository.countByTeamId(team.id)
 
         val likeCount = memberReviewRepository.countByRevieweeIdAndType(author.id, ReviewType.LIKE)
@@ -237,7 +202,6 @@ class PostService(
             UserSimpleResponse.of(author, temperature),
             TeamResponse.of(team, memberCount),
             recruitments,
-            applicantCount,
         )
     }
 
@@ -279,6 +243,15 @@ class PostService(
                 emptyMap()
             }
 
+        val unreadApplicationCountByPostId =
+            if (isMember && postIds.isNotEmpty() && user != null) {
+                applicationRepository
+                    .countUnreadApplicationsGroupByPostId(user.id, postIds)
+                    .associate { it.postId to it.unreadCount.toInt() }
+            } else {
+                emptyMap()
+            }
+
         return posts.map { post ->
             val author =
                 authorById[post.userId]
@@ -288,12 +261,21 @@ class PostService(
                     )
             val recruitments =
                 (recruitmentsByPostId[post.id] ?: emptyList()).map { RecruitmentResponse.from(it) }
-            val applicantCount = if (isMember) applicantCountByPostId[post.id] ?: 0 else null
+            val (applicantCount, unreadApplicationCount) =
+                if (isMember) {
+                    (
+                        applicantCountByPostId[post.id]
+                            ?: 0
+                    ) to (unreadApplicationCountByPostId[post.id] ?: 0)
+                } else {
+                    null to null
+                }
             PostSimpleResponse.of(
                 post,
                 UserSimpleResponse.of(author, temperatureByUserId[author.id]!!),
                 recruitments,
                 applicantCount,
+                unreadApplicationCount,
             )
         }
     }

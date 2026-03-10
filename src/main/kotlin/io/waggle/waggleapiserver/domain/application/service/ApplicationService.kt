@@ -1,11 +1,15 @@
 package io.waggle.waggleapiserver.domain.application.service
 
+import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
+import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.domain.application.Application
+import io.waggle.waggleapiserver.domain.application.ApplicationRead
 import io.waggle.waggleapiserver.domain.application.ApplicationStatus
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
+import io.waggle.waggleapiserver.domain.application.repository.ApplicationReadRepository
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
 import io.waggle.waggleapiserver.domain.member.Member
 import io.waggle.waggleapiserver.domain.member.MemberRole
@@ -17,6 +21,7 @@ import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentReposi
 import io.waggle.waggleapiserver.domain.user.TemperatureCalculator
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class ApplicationService(
     private val applicationRepository: ApplicationRepository,
+    private val applicationReadRepository: ApplicationReadRepository,
     private val memberRepository: MemberRepository,
     private val memberReviewRepository: MemberReviewRepository,
     private val postRepository: PostRepository,
@@ -93,6 +99,48 @@ class ApplicationService(
         return ApplicationResponse.of(savedApplication, user, temperature)
     }
 
+    @Transactional
+    fun markApplicationAsRead(
+        applicationId: Long,
+        user: User,
+    ): ApplicationResponse {
+        val application =
+            applicationRepository.findByIdOrNull(applicationId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Application not found: $applicationId",
+                )
+
+        val member =
+            memberRepository.findByUserIdAndTeamId(user.id, application.teamId)
+                ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
+        member.checkMemberRole(MemberRole.MANAGER)
+
+        if (!applicationReadRepository.existsByApplicationIdAndUserId(applicationId, user.id)) {
+            val applicationRead =
+                ApplicationRead(
+                    applicationId = applicationId,
+                    userId = user.id,
+                )
+            applicationReadRepository.save(applicationRead)
+        }
+
+        val applicant =
+            userRepository.findByIdOrNull(application.userId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "User not found: ${application.userId}",
+                )
+
+        val likeCount =
+            memberReviewRepository.countByRevieweeIdAndType(applicant.id, ReviewType.LIKE)
+        val dislikeCount =
+            memberReviewRepository.countByRevieweeIdAndType(applicant.id, ReviewType.DISLIKE)
+        val temperature = temperatureCalculator.calculate(likeCount, dislikeCount)
+
+        return ApplicationResponse.of(application, applicant, temperature, isRead = true)
+    }
+
     fun getUserApplications(user: User): List<ApplicationResponse> {
         val applications = applicationRepository.findByUserId(user.id)
 
@@ -106,15 +154,39 @@ class ApplicationService(
 
     fun getTeamApplications(
         teamId: Long,
+        postId: Long?,
+        cursorQuery: CursorGetQuery,
         user: User,
-    ): List<ApplicationResponse> {
+    ): CursorResponse<ApplicationResponse> {
         val member =
             memberRepository.findByUserIdAndTeamId(user.id, teamId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
-        member.checkMemberRole(MemberRole.MEMBER)
+        member.checkMemberRole(MemberRole.MANAGER)
 
-        val applications = applicationRepository.findByTeamId(teamId)
-        val applicantIds = applications.map { it.userId }.distinct()
+        val pageable = PageRequest.of(0, cursorQuery.size + 1)
+        val applications =
+            if (postId != null) {
+                val post =
+                    postRepository.findByIdOrNull(postId)
+                        ?: throw BusinessException(
+                            ErrorCode.ENTITY_NOT_FOUND,
+                            "Post not found: $postId",
+                        )
+                if (post.teamId != teamId) {
+                    throw BusinessException(
+                        ErrorCode.INVALID_INPUT_VALUE,
+                        "Post $postId does not belong to team $teamId",
+                    )
+                }
+                applicationRepository.findByPostIdWithCursor(postId, cursorQuery.cursor, pageable)
+            } else {
+                applicationRepository.findByTeamIdWithCursor(teamId, cursorQuery.cursor, pageable)
+            }
+
+        val hasNext = applications.size > cursorQuery.size
+        val slicedApplications = if (hasNext) applications.take(cursorQuery.size) else applications
+
+        val applicantIds = slicedApplications.map { it.userId }.distinct()
         val applicantById = userRepository.findAllById(applicantIds).associateBy { it.id }
 
         val reviewCounts = memberReviewRepository.countByRevieweeIdInGroupByType(applicantIds)
@@ -129,15 +201,32 @@ class ApplicationService(
                 temperatureCalculator.calculate(likeCount, dislikeCount)
             }
 
-        return applications.map { application ->
-            val applicant =
-                applicantById[application.userId]
-                    ?: throw BusinessException(
-                        ErrorCode.ENTITY_NOT_FOUND,
-                        "User not found: ${application.userId}",
-                    )
-            ApplicationResponse.of(application, applicant, temperatureByUserId[applicant.id]!!)
-        }
+        val readApplicationIdSet =
+            applicationReadRepository
+                .findReadApplicationIds(user.id, slicedApplications.map { it.id })
+                .toSet()
+
+        val data =
+            slicedApplications.map { application ->
+                val applicant =
+                    applicantById[application.userId]
+                        ?: throw BusinessException(
+                            ErrorCode.ENTITY_NOT_FOUND,
+                            "User not found: ${application.userId}",
+                        )
+                ApplicationResponse.of(
+                    application,
+                    applicant,
+                    temperatureByUserId[applicant.id]!!,
+                    isRead = readApplicationIdSet.contains(application.id),
+                )
+            }
+
+        return CursorResponse(
+            data = data,
+            nextCursor = if (hasNext) slicedApplications.lastOrNull()?.id else null,
+            hasNext = hasNext,
+        )
     }
 
     @Transactional

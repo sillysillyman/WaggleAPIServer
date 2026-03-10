@@ -2,6 +2,8 @@ package io.waggle.waggleapiserver.domain.team
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
+import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.AllowIncompleteProfile
 import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.CurrentUser
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
@@ -9,15 +11,16 @@ import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlRespons
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
 import io.waggle.waggleapiserver.domain.application.service.ApplicationService
+import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.service.MemberService
 import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
-import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.post.service.PostService
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamUpsertRequest
 import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.service.TeamService
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -84,8 +88,10 @@ class TeamController(
     @GetMapping("/{teamId}/applications")
     fun getTeamApplications(
         @PathVariable teamId: Long,
+        @RequestParam(required = false) postId: Long?,
+        @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
-    ): List<ApplicationResponse> = applicationService.getTeamApplications(teamId, user)
+    ): CursorResponse<ApplicationResponse> = applicationService.getTeamApplications(teamId, postId, cursorQuery, user)
 
     @AllowIncompleteProfile
     @Operation(summary = "팀 모집글 목록 조회")

@@ -22,6 +22,8 @@ data class ApplicationResponse(
     val postId: Long,
     @Schema(description = "지원자 정보")
     val user: ApplicantResponse,
+    @Schema(description = "읽음 여부", example = "true")
+    val isRead: Boolean,
     @Schema(description = "지원 동기")
     val detail: String?,
     @Schema(
@@ -67,6 +69,7 @@ data class ApplicationResponse(
             application: Application,
             user: User,
             temperature: Double,
+            isRead: Boolean = false,
         ): ApplicationResponse =
             ApplicationResponse(
                 applicationId = application.id,
@@ -75,6 +78,7 @@ data class ApplicationResponse(
                 teamId = application.teamId,
                 postId = application.postId,
                 user = ApplicantResponse.of(user, temperature),
+                isRead = isRead,
                 detail = application.detail,
                 portfolioUrls = application.portfolioUrls.toList(),
                 createdAt = application.createdAt,
