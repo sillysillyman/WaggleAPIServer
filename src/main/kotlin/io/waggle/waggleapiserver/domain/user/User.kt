@@ -9,10 +9,10 @@ import io.waggle.waggleapiserver.domain.user.enums.Skill
 import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
 import jakarta.persistence.ElementCollection
-import jakarta.persistence.FetchType
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
@@ -35,6 +35,8 @@ class User(
     val providerId: String,
     @Column(nullable = false)
     val email: String,
+    @Column(nullable = false, columnDefinition = "DOUBLE DEFAULT 36.5")
+    var temperature: Double = 36.5,
     @Column(name = "profile_image_url", columnDefinition = "VARCHAR(2083)")
     var profileImageUrl: String?,
     @Enumerated(EnumType.STRING)
