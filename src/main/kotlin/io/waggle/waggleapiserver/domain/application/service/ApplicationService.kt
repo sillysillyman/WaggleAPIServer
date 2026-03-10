@@ -91,12 +91,7 @@ class ApplicationService(
         application.portfolioUrls.addAll(portfolioUrls)
         val savedApplication = applicationRepository.save(application)
 
-        val likeCount = memberReviewRepository.countByRevieweeIdAndType(user.id, ReviewType.LIKE)
-        val dislikeCount =
-            memberReviewRepository.countByRevieweeIdAndType(user.id, ReviewType.DISLIKE)
-        val temperature = temperatureCalculator.calculate(likeCount, dislikeCount)
-
-        return ApplicationResponse.of(savedApplication, user, temperature)
+        return ApplicationResponse.of(savedApplication)
     }
 
     @Transactional
@@ -143,13 +138,7 @@ class ApplicationService(
 
     fun getUserApplications(user: User): List<ApplicationResponse> {
         val applications = applicationRepository.findByUserId(user.id)
-
-        val likeCount = memberReviewRepository.countByRevieweeIdAndType(user.id, ReviewType.LIKE)
-        val dislikeCount =
-            memberReviewRepository.countByRevieweeIdAndType(user.id, ReviewType.DISLIKE)
-        val temperature = temperatureCalculator.calculate(likeCount, dislikeCount)
-
-        return applications.map { ApplicationResponse.of(it, user, temperature) }
+        return applications.map { ApplicationResponse.of(it) }
     }
 
     fun getTeamApplications(
