@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.waggle.waggleapiserver.domain.member.Member
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.user.User
+import io.waggle.waggleapiserver.domain.user.enums.Position
 import io.waggle.waggleapiserver.domain.user.enums.Skill
 import java.time.Instant
 import java.util.UUID
