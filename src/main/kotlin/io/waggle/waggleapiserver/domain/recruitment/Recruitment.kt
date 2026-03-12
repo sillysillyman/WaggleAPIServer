@@ -32,8 +32,8 @@ class Recruitment(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(20)")
     val position: Position,
-    @Column(name = "recruiting_count", nullable = false)
-    val recruitingCount: Int,
+    @Column(nullable = false)
+    val count: Int,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(20)")
     var status: RecruitmentStatus = RecruitmentStatus.RECRUITING,

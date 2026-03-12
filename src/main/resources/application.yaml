@@ -5,6 +5,8 @@ app:
     secure: ${COOKIE_SECURE:false}
   oauth2:
     redirect-uri: ${OAUTH2_REDIRECT_URI}
+  temperature:
+    sensitivity: ${TEMPERATURE_SENSITIVITY:0.1}
   s3:
     base-url: ${S3_BASE_URL}
     bucket: ${S3_BUCKET}
@@ -33,10 +35,10 @@ spring:
   application:
     name: WaggleAPIServer
 
-#  flyway:
-#    enabled: true
-#    baseline-on-migrate: true
-#    locations: classpath:db/migration
+  #  flyway:
+  #    enabled: true
+  #    baseline-on-migrate: true
+  #    locations: classpath:db/migration
 
   jackson:
     serialization:

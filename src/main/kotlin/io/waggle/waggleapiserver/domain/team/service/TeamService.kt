@@ -11,9 +11,9 @@ import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.team.Team
+import io.waggle.waggleapiserver.domain.team.dto.request.TeamStatusUpdateRequest
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamUpsertRequest
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamDetailResponse
-import io.waggle.waggleapiserver.domain.team.enums.WorkMode
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
@@ -35,7 +35,7 @@ class TeamService(
     fun createTeam(
         request: TeamUpsertRequest,
         user: User,
-    ): TeamDetailResponse {
+    ): TeamResponse {
         val (name, description, workMode, profileImageUrl) = request
 
         if (teamRepository.existsByName(name)) {
@@ -61,12 +61,15 @@ class TeamService(
             Member(
                 userId = user.id,
                 teamId = savedTeam.id,
+                position = user.position!!,
                 role = MemberRole.LEADER,
             )
 
-        val savedMember = memberRepository.save(member)
+        memberRepository.save(member)
 
-        return TeamDetailResponse.of(savedTeam, listOf(MemberResponse.of(savedMember, user)))
+        val memberCount = memberRepository.countByTeamId(savedTeam.id)
+
+        return TeamResponse.of(savedTeam, memberCount)
     }
 
     fun generateProfileImagePresignedUrl(request: PresignedUrlRequest): PresignedUrlResponse {
@@ -78,25 +81,41 @@ class TeamService(
         return PresignedUrlResponse.from(presignedUploadUrl)
     }
 
-    fun getTeam(teamId: Long): TeamDetailResponse {
+    fun getTeam(teamId: Long): TeamResponse {
         val team =
             teamRepository.findByIdOrNull(teamId)
                 ?: throw BusinessException(
                     ErrorCode.ENTITY_NOT_FOUND,
                     "Team not found: $teamId",
                 )
-        val members = memberRepository.findByTeamIdOrderByRoleAscCreatedAtAsc(teamId)
+        val memberCount = memberRepository.countByTeamId(teamId)
+
+        return TeamResponse.of(team, memberCount)
+    }
+
+    fun getTeamMembers(
+        teamId: Long,
+        user: User?,
+    ): List<MemberResponse> {
+        val isTeamMember = user?.let { memberRepository.existsByUserIdAndTeamId(it.id, teamId) } ?: false
+
+        val activeMembers = memberRepository.findByTeamIdOrderByRoleAscCreatedAtAsc(teamId)
+        val deletedMembers =
+            if (isTeamMember) {
+                memberRepository.findByTeamIdAndDeletedAtIsNotNullOrderByRoleAscCreatedAtAsc(teamId)
+            } else {
+                emptyList()
+            }
+        val members = activeMembers + deletedMembers
+
         val userById = userRepository.findAllById(members.map { it.userId }).associateBy { it.id }
 
-        return TeamDetailResponse.of(
-            team,
-            members.map {
-                MemberResponse.of(
-                    it,
-                    userById[it.userId]!!,
-                )
-            },
-        )
+        return members.map {
+            MemberResponse.of(
+                it,
+                userById[it.userId]!!,
+            )
+        }
     }
 
     @Transactional
@@ -104,7 +123,7 @@ class TeamService(
         teamId: Long,
         request: TeamUpsertRequest,
         user: User,
-    ): TeamDetailResponse {
+    ): TeamResponse {
         val member =
             memberRepository.findByUserIdAndTeamId(user.id, teamId)
                 ?: throw BusinessException(
@@ -144,18 +163,37 @@ class TeamService(
             profileImageUrl = profileImageUrl,
         )
 
-        val members = memberRepository.findByTeamIdOrderByRoleAscCreatedAtAsc(teamId)
-        val userById = userRepository.findAllById(members.map { it.userId }).associateBy { it.id }
+        val memberCount = memberRepository.countByTeamId(teamId)
 
-        return TeamDetailResponse.of(
-            team,
-            members.map {
-                MemberResponse.of(
-                    it,
-                    userById[it.userId]!!,
+        return TeamResponse.of(team, memberCount)
+    }
+
+    @Transactional
+    fun updateTeamStatus(
+        teamId: Long,
+        request: TeamStatusUpdateRequest,
+        user: User,
+    ): TeamResponse {
+        val member =
+            memberRepository.findByUserIdAndTeamId(user.id, teamId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Member not found: ${user.id}, $teamId",
                 )
-            },
-        )
+        member.checkMemberRole(MemberRole.LEADER)
+
+        val team =
+            teamRepository.findByIdOrNull(teamId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Team not found: $teamId",
+                )
+
+        team.updateStatus(request.status)
+
+        val memberCount = memberRepository.countByTeamId(teamId)
+
+        return TeamResponse.of(team, memberCount)
     }
 
     @Transactional

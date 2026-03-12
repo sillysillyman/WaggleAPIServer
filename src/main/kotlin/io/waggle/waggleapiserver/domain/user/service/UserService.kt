@@ -7,16 +7,21 @@ import io.waggle.waggleapiserver.common.storage.StorageClient
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamSimpleResponse
+import io.waggle.waggleapiserver.domain.memberreview.enums.ReviewType
+import io.waggle.waggleapiserver.domain.memberreview.repository.MemberReviewRepository
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
+import io.waggle.waggleapiserver.domain.user.dto.request.MemberUpdateVisibilityRequest
 import io.waggle.waggleapiserver.domain.user.dto.request.UserSetupProfileRequest
 import io.waggle.waggleapiserver.domain.user.dto.request.UserUpdateRequest
 import io.waggle.waggleapiserver.domain.user.dto.response.UserCheckUsernameResponse
 import io.waggle.waggleapiserver.domain.user.dto.response.UserDetailResponse
 import io.waggle.waggleapiserver.domain.user.dto.response.UserProfileCompletionResponse
+import io.waggle.waggleapiserver.domain.user.dto.response.UserProfileResponse
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -28,6 +33,7 @@ class UserService(
     private val eventPublisher: ApplicationEventPublisher,
     private val storageClient: StorageClient,
     private val memberRepository: MemberRepository,
+    private val memberReviewRepository: MemberReviewRepository,
     private val teamRepository: TeamRepository,
     private val userRepository: UserRepository,
 ) {
@@ -73,29 +79,85 @@ class UserService(
         return UserCheckUsernameResponse(isAvailable)
     }
 
-    fun getUser(userId: UUID): UserDetailResponse {
+    fun getUserProfile(userId: UUID): UserProfileResponse {
         val user =
             userRepository.findByIdOrNull(userId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "User not found: $userId")
 
-        user.checkProfileComplete()
-
-        return UserDetailResponse.from(user)
+        return getUserProfile(user)
     }
 
-    fun getUserTeams(userId: UUID): List<TeamSimpleResponse> {
-        val teamIds =
-            memberRepository
-                .findByUserIdOrderByRoleAscCreatedAtAsc(userId)
-                .map { it.teamId }
+    fun getUserProfile(user: User): UserProfileResponse {
+        user.checkProfileComplete()
+
+        val top3LikeTags =
+            memberReviewRepository.countTagsByRevieweeIdAndType(
+                user.id,
+                ReviewType.LIKE,
+                PageRequest.of(0, 3),
+            )
+
+        return UserProfileResponse.of(user, top3LikeTags)
+    }
+
+    fun getUserTeams(
+        userId: UUID,
+        includeHidden: Boolean = false,
+    ): List<TeamResponse> {
+        val members =
+            if (includeHidden) {
+                memberRepository.findByUserIdOrderByRoleAscCreatedAtAsc(userId)
+            } else {
+                memberRepository.findByUserIdAndVisibleTrueOrderByRoleAscCreatedAtAsc(userId)
+            }
+
+        val teamIds = members.map { it.teamId }
         val teamById = teamRepository.findAllById(teamIds).associateBy { it.id }
 
-        return teamIds.mapNotNull { teamId ->
-            teamById[teamId]?.let { TeamSimpleResponse.from(it) }
+        return members.mapNotNull { member ->
+            teamById[member.teamId]?.let { team ->
+                val memberCount = memberRepository.countByTeamId(team.id)
+                TeamResponse.of(
+                    team = team,
+                    memberCount = memberCount,
+                    position = if (includeHidden) member.position else null,
+                    role = if (includeHidden) member.role else null,
+                    visible = if (includeHidden) member.visible else null,
+                )
+            }
         }
     }
 
-    fun getUserProfileCompletion(user: User): UserProfileCompletionResponse = UserProfileCompletionResponse(user.isProfileComplete())
+    fun getUserProfileCompletion(user: User): UserProfileCompletionResponse =
+        UserProfileCompletionResponse(isComplete = user.isProfileComplete())
+
+    @Transactional
+    fun updateTeamVisibility(
+        userId: UUID,
+        teamId: Long,
+        request: MemberUpdateVisibilityRequest,
+    ): TeamResponse {
+        val member =
+            memberRepository.findByUserIdAndTeamId(userId, teamId)
+                ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
+
+        val (visible) = request
+        member.updateVisibility(visible)
+
+        val team =
+            teamRepository.findByIdOrNull(teamId)
+                ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Team not found")
+
+        val memberCount = memberRepository.countByTeamId(teamId)
+
+        return TeamResponse.of(
+            team = team,
+            memberCount = memberCount,
+            position = member.position,
+            role = member.role,
+            visible = visible,
+        )
+    }
 
     @Transactional
     fun updateUser(

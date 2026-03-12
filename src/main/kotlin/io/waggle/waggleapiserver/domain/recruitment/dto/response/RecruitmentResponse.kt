@@ -13,8 +13,8 @@ class RecruitmentResponse(
     val recruitmentId: Long,
     @Schema(description = "모집 직무", example = "BACKEND")
     val position: Position,
-    @Schema(description = "모집 중인 인원 수", example = "3")
-    val recruitingCount: Int,
+    @Schema(description = "모집 인원 수", example = "3")
+    val count: Int,
     @Schema(description = "모집 상태", example = "RECRUITING")
     val status: RecruitmentStatus,
     @Schema(description = "요구 스킬 목록")
@@ -29,7 +29,7 @@ class RecruitmentResponse(
             RecruitmentResponse(
                 recruitmentId = recruitment.id,
                 position = recruitment.position,
-                recruitingCount = recruitment.recruitingCount,
+                count = recruitment.count,
                 status = recruitment.status,
                 skills = recruitment.skills,
                 createdAt = recruitment.createdAt,

@@ -4,20 +4,19 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
+import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
+import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.domain.post.dto.request.PostGetQuery
 import io.waggle.waggleapiserver.domain.post.dto.request.PostUpsertRequest
 import io.waggle.waggleapiserver.domain.post.dto.response.PostDetailResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
 import io.waggle.waggleapiserver.domain.post.service.PostService
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
-import org.springframework.data.web.PageableDefault
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
-import org.springdoc.core.annotations.ParameterObject
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -42,17 +41,13 @@ class PostController(
     ): PostDetailResponse = postService.createPost(request, user)
 
     @AllowIncompleteProfile
-    @Operation(summary = "모집글 목록 페이지네이션 조회")
+    @Operation(summary = "모집글 목록 커서 페이지네이션 조회")
     @GetMapping
     fun getPosts(
         @ParameterObject query: PostGetQuery,
+        @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User?,
-        @PageableDefault(
-            size = 15,
-            sort = ["createdAt"],
-            direction = Sort.Direction.DESC,
-        ) pageable: Pageable,
-    ): Page<PostDetailResponse> = postService.getPosts(query, user, pageable)
+    ): CursorResponse<PostSimpleResponse> = postService.getPosts(query, cursorQuery, user)
 
     @AllowIncompleteProfile
     @Operation(summary = "모집글 상세 조회")

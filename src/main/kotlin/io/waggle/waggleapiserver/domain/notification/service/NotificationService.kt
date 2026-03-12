@@ -3,10 +3,11 @@ package io.waggle.waggleapiserver.domain.notification.service
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.domain.notification.Notification
+import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.notification.dto.request.NotificationCreateRequest
 import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationResponse
 import io.waggle.waggleapiserver.domain.notification.repository.NotificationRepository
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamSimpleResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true)
 class NotificationService(
+    private val memberRepository: MemberRepository,
     private val notificationRepository: NotificationRepository,
     private val teamRepository: TeamRepository,
     private val userRepository: UserRepository,
@@ -49,7 +51,9 @@ class NotificationService(
         val teamById = teamRepository.findAllById(teamIds).associateBy { it.id }
 
         return notifications.map { notification ->
-            val team = notification.teamId?.let { teamById[it] }?.let(TeamSimpleResponse::from)
+            val team = notification.teamId?.let { teamById[it] }?.let {
+                TeamResponse.of(it, memberRepository.countByTeamId(it.id))
+            }
 
             NotificationResponse.of(
                 notification = notification,
