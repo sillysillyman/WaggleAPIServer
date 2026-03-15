@@ -47,17 +47,27 @@ class NotificationService(
     fun getUserNotifications(user: User): List<NotificationResponse> {
         val notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.id)
 
-        val teamIds = notifications.mapNotNull { it.teamId }
+        val teamIds = notifications.mapNotNull { it.teamId }.distinct()
         val teamById = teamRepository.findAllById(teamIds).associateBy { it.id }
+        val memberCountByTeamId = memberRepository.countByTeamIds(teamIds)
+            .associate { it.teamId to it.count.toInt() }
+
+        val triggeredByUserIds = notifications.mapNotNull { it.triggeredBy }
+        val triggeredByUserById = userRepository.findAllById(triggeredByUserIds).associateBy { it.id }
 
         return notifications.map { notification ->
             val team = notification.teamId?.let { teamById[it] }?.let {
-                TeamResponse.of(it, memberRepository.countByTeamId(it.id))
+                TeamResponse.of(it, memberCountByTeamId[it.id] ?: 0)
+            }
+
+            val triggeredBy = notification.triggeredBy?.let {
+                triggeredByUserById[it]?.let { user -> NotificationResponse.TriggeredByResponse.of(user) }
             }
 
             NotificationResponse.of(
                 notification = notification,
                 team = team,
+                triggeredBy = triggeredBy,
             )
         }
     }
