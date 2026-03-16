@@ -1,9 +1,11 @@
 package io.waggle.waggleapiserver.domain.message.service
 
+import io.waggle.waggleapiserver.common.dto.request.CursorDirection
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
+import io.waggle.waggleapiserver.domain.conversation.service.ConversationService
 import io.waggle.waggleapiserver.domain.message.Message
 import io.waggle.waggleapiserver.domain.message.adapter.MessageEvent
 import io.waggle.waggleapiserver.domain.message.adapter.MessagePublisher
@@ -19,6 +21,7 @@ import java.util.UUID
 
 @Service
 class MessageService(
+    private val conversationService: ConversationService,
     private val messagePublisher: MessagePublisher,
     private val messageRepository: MessageRepository,
     private val userRepository: UserRepository,
@@ -42,6 +45,8 @@ class MessageService(
             )
         val savedMessage = messageRepository.save(message)
 
+        conversationService.updateConversations(savedMessage)
+
         val event =
             MessageEvent(
                 messageId = savedMessage.id,
@@ -53,24 +58,35 @@ class MessageService(
     @Transactional(readOnly = true)
     fun getMessageHistory(
         partnerId: UUID,
+        cursorQuery: CursorGetQuery,
         user: User,
-        query: CursorGetQuery,
     ): CursorResponse<MessageResponse> {
-        val (cursor, size) = query
+        val (cursor, size, direction) = cursorQuery
+        val pageable = PageRequest.of(0, size + 1)
 
         val messages =
-            messageRepository.findMessageHistoryByCursor(
-                user.id,
-                partnerId,
-                cursor,
-                PageRequest.of(0, size + 1),
-            )
+            when (direction ?: CursorDirection.BEFORE) {
+                CursorDirection.BEFORE ->
+                    messageRepository.findMessageHistoryBefore(user.id, partnerId, cursor, pageable)
+                CursorDirection.AFTER ->
+                    messageRepository.findMessageHistoryAfter(user.id, partnerId, cursor, pageable)
+            }
 
         val hasNext = messages.size > size
-        val data =
-            (if (hasNext) messages.dropLast(1) else messages)
-                .map { MessageResponse.from(it) }
-        val nextCursor = if (hasNext) data.last().messageId else null
+        val slicedMessages = if (hasNext) messages.take(size) else messages
+
+        val partner = userRepository.findById(partnerId)
+            .orElseThrow { BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Partner not found: $partnerId") }
+        val userById = mapOf(user.id to user, partner.id to partner)
+
+        val data = slicedMessages.map { msg ->
+            MessageResponse.of(
+                message = msg,
+                sender = userById[msg.senderId]!!,
+                receiver = userById[msg.receiverId]!!,
+            )
+        }
+        val nextCursor = if (hasNext) slicedMessages.last().id else null
 
         return CursorResponse(
             data = data,
