@@ -38,14 +38,14 @@ class ConversationService(
         val partnerById = userRepository.findAllById(partnerIds).associateBy { it.id }
 
         val lastMessageIds = slicedConversations.map { it.lastMessageId }
-        val messages = messageRepository.findAllById(lastMessageIds).associateBy { it.id }
+        val messageById = messageRepository.findAllById(lastMessageIds).associateBy { it.id }
 
         val data =
             slicedConversations.map { conv ->
                 ConversationResponse.of(
                     conversation = conv,
                     partner = partnerById[conv.partnerId],
-                    lastMessage = messages[conv.lastMessageId]!!,
+                    lastMessage = messageById[conv.lastMessageId]!!,
                 )
             }
 
