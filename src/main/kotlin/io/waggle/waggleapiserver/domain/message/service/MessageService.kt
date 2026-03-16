@@ -66,26 +66,37 @@ class MessageService(
 
         val messages =
             when (direction ?: CursorDirection.BEFORE) {
-                CursorDirection.BEFORE ->
+                CursorDirection.BEFORE -> {
                     messageRepository.findMessageHistoryBefore(user.id, partnerId, cursor, pageable)
-                CursorDirection.AFTER ->
+                }
+
+                CursorDirection.AFTER -> {
                     messageRepository.findMessageHistoryAfter(user.id, partnerId, cursor, pageable)
+                }
             }
 
         val hasNext = messages.size > size
         val slicedMessages = if (hasNext) messages.take(size) else messages
 
-        val partner = userRepository.findById(partnerId)
-            .orElseThrow { BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Partner not found: $partnerId") }
+        val partner =
+            userRepository
+                .findById(partnerId)
+                .orElseThrow {
+                    BusinessException(
+                        ErrorCode.ENTITY_NOT_FOUND,
+                        "Partner not found: $partnerId",
+                    )
+                }
         val userById = mapOf(user.id to user, partner.id to partner)
 
-        val data = slicedMessages.map { msg ->
-            MessageResponse.of(
-                message = msg,
-                sender = userById[msg.senderId]!!,
-                receiver = userById[msg.receiverId]!!,
-            )
-        }
+        val data =
+            slicedMessages.map { msg ->
+                MessageResponse.of(
+                    message = msg,
+                    sender = userById[msg.senderId]!!,
+                    receiver = userById[msg.receiverId]!!,
+                )
+            }
         val nextCursor = if (hasNext) slicedMessages.last().id else null
 
         return CursorResponse(
