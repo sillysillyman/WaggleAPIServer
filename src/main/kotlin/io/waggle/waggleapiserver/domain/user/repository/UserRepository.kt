@@ -9,10 +9,10 @@ interface UserRepository : JpaRepository<User, UUID> {
 
     fun existsByUsername(username: String): Boolean
 
+    fun existsByIdAndDeletedAtIsNull(id: UUID): Boolean
+
     fun findByProviderAndProviderId(
         provider: String,
         providerId: String,
     ): User?
-
-    fun findByIdIn(ids: List<UUID>): List<User>
 }

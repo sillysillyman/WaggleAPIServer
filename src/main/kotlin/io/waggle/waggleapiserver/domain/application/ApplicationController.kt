@@ -2,7 +2,7 @@ package io.waggle.waggleapiserver.domain.application
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.CurrentUser
+import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
 import io.waggle.waggleapiserver.domain.application.service.ApplicationService
 import io.waggle.waggleapiserver.domain.user.User

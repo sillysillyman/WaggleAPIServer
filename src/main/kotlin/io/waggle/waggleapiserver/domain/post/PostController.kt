@@ -2,10 +2,10 @@ package io.waggle.waggleapiserver.domain.post
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
+import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
-import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.AllowIncompleteProfile
-import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.CurrentUser
 import io.waggle.waggleapiserver.domain.post.dto.request.PostGetQuery
 import io.waggle.waggleapiserver.domain.post.dto.request.PostUpsertRequest
 import io.waggle.waggleapiserver.domain.post.dto.response.PostDetailResponse

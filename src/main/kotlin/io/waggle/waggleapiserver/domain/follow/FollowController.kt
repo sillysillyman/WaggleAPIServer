@@ -2,7 +2,7 @@ package io.waggle.waggleapiserver.domain.follow
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.CurrentUser
+import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.follow.dto.request.FollowToggleRequest
 import io.waggle.waggleapiserver.domain.follow.dto.response.FollowToggleResponse
 import io.waggle.waggleapiserver.domain.follow.service.FollowService

@@ -2,7 +2,7 @@ package io.waggle.waggleapiserver.domain.bookmark
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import io.waggle.waggleapiserver.common.infrastructure.persistence.resolver.CurrentUser
+import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.bookmark.dto.request.BookmarkToggleRequest
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkToggleResponse
 import io.waggle.waggleapiserver.domain.bookmark.service.BookmarkService

@@ -1,4 +1,4 @@
-package io.waggle.waggleapiserver.common.infrastructure.persistence.resolver
+package io.waggle.waggleapiserver.common.infrastructure.persistence
 
 import io.swagger.v3.oas.annotations.Parameter
 import io.waggle.waggleapiserver.common.exception.BusinessException

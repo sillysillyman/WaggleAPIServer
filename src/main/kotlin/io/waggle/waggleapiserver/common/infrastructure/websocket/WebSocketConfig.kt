@@ -1,6 +1,5 @@
-package io.waggle.waggleapiserver.common.infrastructure.config
+package io.waggle.waggleapiserver.common.infrastructure.websocket
 
-import io.waggle.waggleapiserver.common.infrastructure.websocket.WebSocketAuthHandshakeInterceptor
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
