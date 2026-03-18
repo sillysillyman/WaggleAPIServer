@@ -2,15 +2,16 @@ package io.waggle.waggleapiserver.domain.post
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
-import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
+import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
+import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.post.dto.request.PostGetQuery
 import io.waggle.waggleapiserver.domain.post.dto.request.PostUpsertRequest
 import io.waggle.waggleapiserver.domain.post.dto.response.PostDetailResponse
 import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
 import io.waggle.waggleapiserver.domain.post.service.PostService
+import io.waggle.waggleapiserver.domain.recruitment.dto.request.RecruitmentUpdateStatusRequest
 import io.waggle.waggleapiserver.domain.user.User
 import jakarta.validation.Valid
 import org.springdoc.core.annotations.ParameterObject
@@ -65,15 +66,14 @@ class PostController(
         @CurrentUser user: User,
     ): PostDetailResponse = postService.updatePost(postId, request, user)
 
-    @Operation(summary = "모집 마감")
-    @PatchMapping("/{postId}/close")
+    @Operation(summary = "모집 상태 변경")
+    @PatchMapping("/{postId}/recruitment-status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun closePostRecruitments(
+    fun updatePostRecruitmentStatus(
         @PathVariable postId: Long,
+        @Valid @RequestBody request: RecruitmentUpdateStatusRequest,
         @CurrentUser user: User,
-    ) {
-        postService.closePostRecruitments(postId, user)
-    }
+    ) = postService.updatePostRecruitmentStatus(postId, request, user)
 
     @Operation(summary = "모집글 삭제")
     @DeleteMapping("/{postId}")
@@ -81,7 +81,5 @@ class PostController(
     fun deletePost(
         @PathVariable postId: Long,
         @CurrentUser user: User,
-    ) {
-        postService.deletePost(postId, user)
-    }
+    ) = postService.deletePost(postId, user)
 }
