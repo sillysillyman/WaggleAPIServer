@@ -47,10 +47,10 @@ class Recruitment(
 ) : AuditingEntity() {
     fun isRecruiting(): Boolean = status == RecruitmentStatus.RECRUITING
 
-    fun close() {
-        if (status == RecruitmentStatus.CLOSED) {
-            throw BusinessException(ErrorCode.INVALID_STATE, "Recruitment is already closed")
+    fun updateStatus(newStatus: RecruitmentStatus) {
+        if (status == newStatus) {
+            throw BusinessException(ErrorCode.INVALID_STATE, "Recruitment is already ${newStatus.name}")
         }
-        status = RecruitmentStatus.CLOSED
+        status = newStatus
     }
 }
