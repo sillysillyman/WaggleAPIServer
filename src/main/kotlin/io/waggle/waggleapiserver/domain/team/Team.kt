@@ -44,7 +44,7 @@ class Team(
     val creatorId: UUID,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(20)")
-    var status: TeamStatus = TeamStatus.ACTIVE,
+    var status: TeamStatus = TeamStatus.PREPARING,
 ) : AuditingEntity(),
     Bookmarkable {
     override val targetId: Long
@@ -66,8 +66,11 @@ class Team(
         this.profileImageUrl = profileImageUrl
     }
 
-    fun updateStatus(status: TeamStatus) {
-        this.status = status
+    fun updateStatus(newStatus: TeamStatus) {
+        if (this.status == newStatus) {
+            throw BusinessException(ErrorCode.INVALID_STATE, "Team is already ${newStatus.name}")
+        }
+        this.status = newStatus
     }
 
     fun checkCompleted() {
