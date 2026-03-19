@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import java.time.Duration
@@ -18,7 +19,13 @@ import java.util.concurrent.ConcurrentHashMap
 class RateLimitFilter(
     private val objectMapper: ObjectMapper,
 ) : OncePerRequestFilter() {
+    // TODO: 다중 서버 환경 시 bucket4j-redis로 전환 필요
     private val buckets = ConcurrentHashMap<String, Bucket>()
+
+    @Scheduled(fixedRate = 600_000)
+    fun cleanUpExpiredBuckets() {
+        buckets.entries.removeIf { it.value.availableTokens == 100L }
+    }
 
     override fun doFilterInternal(
         request: HttpServletRequest,
