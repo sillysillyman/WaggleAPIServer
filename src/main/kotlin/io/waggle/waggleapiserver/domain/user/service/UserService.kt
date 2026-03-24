@@ -121,8 +121,8 @@ class UserService(
                 TeamResponse.of(
                     team = team,
                     memberCount = memberCountByTeamId[team.id] ?: 0,
-                    position = if (includeHidden) member.position else null,
-                    role = if (includeHidden) member.role else null,
+                    position = member.position,
+                    role = member.role,
                     visible = if (includeHidden) member.visible else null,
                 )
             }
