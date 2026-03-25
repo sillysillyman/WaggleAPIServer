@@ -6,9 +6,15 @@ import io.waggle.waggleapiserver.common.storage.StorageClient
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.common.storage.event.ImageDeleteEvent
+import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
+import io.waggle.waggleapiserver.domain.auth.service.AuthService
+import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
+import io.waggle.waggleapiserver.domain.follow.repository.FollowRepository
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.memberreview.enums.ReviewType
 import io.waggle.waggleapiserver.domain.memberreview.repository.MemberReviewRepository
+import io.waggle.waggleapiserver.domain.notification.repository.NotificationRepository
+import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
@@ -32,8 +38,14 @@ import java.util.UUID
 class UserService(
     private val eventPublisher: ApplicationEventPublisher,
     private val storageClient: StorageClient,
+    private val authService: AuthService,
+    private val applicationRepository: ApplicationRepository,
+    private val bookmarkRepository: BookmarkRepository,
+    private val followRepository: FollowRepository,
     private val memberRepository: MemberRepository,
     private val memberReviewRepository: MemberReviewRepository,
+    private val notificationRepository: NotificationRepository,
+    private val postRepository: PostRepository,
     private val teamRepository: TeamRepository,
     private val userRepository: UserRepository,
 ) {
@@ -84,12 +96,12 @@ class UserService(
             userRepository.findByIdOrNull(userId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "User not found: $userId")
 
+        user.checkProfileComplete()
+
         return getUserProfile(user)
     }
 
     fun getUserProfile(user: User): UserProfileResponse {
-        user.checkProfileComplete()
-
         val top3LikeTags =
             memberReviewRepository.countTagsByRevieweeIdAndType(
                 user.id,
@@ -167,5 +179,19 @@ class UserService(
         val savedUser = userRepository.save(user)
 
         return UserDetailResponse.from(savedUser)
+    }
+
+    @Transactional
+    fun deactivateUser(user: User) {
+        memberRepository.updateDeletedAtByUserIdAndDeletedAtIsNull(user.id)
+        applicationRepository.updateDeletedAtByUserIdAndDeletedAtIsNull(user.id)
+        postRepository.updateDeletedAtByUserIdAndDeletedAtIsNull(user.id)
+        followRepository.updateDeletedAtByFollowerIdOrFolloweeIdAndDeletedAtIsNull(user.id)
+        bookmarkRepository.deleteByIdUserId(user.id)
+        notificationRepository.deleteByUserId(user.id)
+
+        authService.deleteRefreshToken(user.id)
+
+        user.deactivate()
     }
 }

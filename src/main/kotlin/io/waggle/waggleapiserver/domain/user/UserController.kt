@@ -35,6 +35,7 @@ import io.waggle.waggleapiserver.domain.user.service.UserService
 import jakarta.validation.Valid
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -220,4 +221,11 @@ class UserController(
         @Valid @RequestBody request: UserUpdateRequest,
         @CurrentUser user: User,
     ): UserDetailResponse = userService.updateUser(request, user)
+
+    @Operation(summary = "회원 탈퇴")
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun deactivateMe(
+        @CurrentUser user: User,
+    ) = userService.deactivateUser(user)
 }
