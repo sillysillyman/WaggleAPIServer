@@ -43,6 +43,7 @@ class User(
     @Column(nullable = false, columnDefinition = "VARCHAR(10)")
     var role: UserRole = UserRole.USER,
 ) : AuditingEntity() {
+    @Column(unique = true)
     var username: String? = null
 
     @Enumerated(EnumType.STRING)
@@ -103,5 +104,14 @@ class User(
         if (!isProfileComplete()) {
             throw BusinessException(ErrorCode.INVALID_STATE, "Profile is not set up yet")
         }
+    }
+
+    fun deactivate() {
+        this.username = null
+        delete()
+    }
+
+    fun reactivate() {
+        this.deletedAt = null
     }
 }
