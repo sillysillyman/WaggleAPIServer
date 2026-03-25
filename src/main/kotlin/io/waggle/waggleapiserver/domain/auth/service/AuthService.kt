@@ -70,4 +70,8 @@ class AuthService(
 
         authCookieManager.expireRefreshTokenCookie(response)
     }
+
+    fun deleteRefreshToken(userId: UUID) {
+        redisTemplate.delete("refresh-token:$userId")
+    }
 }
