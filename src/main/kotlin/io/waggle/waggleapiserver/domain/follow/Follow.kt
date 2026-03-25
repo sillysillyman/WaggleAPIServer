@@ -1,5 +1,6 @@
 package io.waggle.waggleapiserver.domain.follow
 
+import io.waggle.waggleapiserver.common.AuditingEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -8,7 +9,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
-import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -24,7 +24,4 @@ class Follow(
     val followerId: UUID,
     @Column(name = "followee_id", nullable = false)
     val followeeId: UUID,
-) {
-    @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: Instant = Instant.now()
-}
+) : AuditingEntity()
