@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.domain.member.repository
 import io.waggle.waggleapiserver.domain.member.Member
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.util.UUID
@@ -66,6 +67,18 @@ interface MemberRepository : JpaRepository<Member, Long> {
     fun findByTeamIdAndDeletedAtIsNotNullOrderByRoleAscCreatedAtAsc(
         @Param("teamId") teamId: Long,
     ): List<Member>
+
+    @Modifying
+    @Query(
+        """
+        UPDATE Member m
+        SET m.deletedAt = CURRENT_TIMESTAMP
+        WHERE m.userId = :userId AND m.deletedAt IS NULL
+        """,
+    )
+    fun updateDeletedAtByUserIdAndDeletedAtIsNull(
+        @Param("userId") userId: UUID,
+    )
 }
 
 interface TeamMemberCount {

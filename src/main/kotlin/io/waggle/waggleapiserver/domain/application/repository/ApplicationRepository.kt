@@ -5,6 +5,7 @@ import io.waggle.waggleapiserver.domain.application.ApplicationStatus
 import io.waggle.waggleapiserver.domain.user.enums.Position
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.Instant
@@ -78,6 +79,18 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
         @Param("userId") userId: UUID,
         @Param("postIds") postIds: List<Long>,
     ): List<PostUnreadCount>
+
+    @Modifying
+    @Query(
+        """
+        UPDATE Application a
+        SET a.deletedAt = CURRENT_TIMESTAMP
+        WHERE a.userId = :userId AND a.deletedAt IS NULL
+        """,
+    )
+    fun updateDeletedAtByUserIdAndDeletedAtIsNull(
+        @Param("userId") userId: UUID,
+    )
 }
 
 interface PostApplicantCount {

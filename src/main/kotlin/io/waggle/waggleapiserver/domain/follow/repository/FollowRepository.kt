@@ -2,6 +2,9 @@ package io.waggle.waggleapiserver.domain.follow.repository
 
 import io.waggle.waggleapiserver.domain.follow.Follow
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface FollowRepository : JpaRepository<Follow, Long> {
@@ -22,4 +25,28 @@ interface FollowRepository : JpaRepository<Follow, Long> {
     fun findByFollowerId(followerId: UUID): List<Follow>
 
     fun findByFolloweeId(followeeId: UUID): List<Follow>
+
+    @Modifying
+    @Query(
+        """
+        UPDATE Follow f
+        SET f.deletedAt = CURRENT_TIMESTAMP
+        WHERE (f.followerId = :userId OR f.followeeId = :userId) AND f.deletedAt IS NULL
+        """,
+    )
+    fun updateDeletedAtByFollowerIdOrFolloweeIdAndDeletedAtIsNull(
+        @Param("userId") userId: UUID,
+    )
+
+    @Modifying
+    @Query(
+        """
+        UPDATE Follow f
+        SET f.deletedAt = NULL
+        WHERE (f.followerId = :userId OR f.followeeId = :userId) AND f.deletedAt IS NOT NULL
+        """,
+    )
+    fun updateDeletedAtNullByFollowerIdOrFolloweeIdAndDeletedAtIsNotNull(
+        @Param("userId") userId: UUID,
+    )
 }

@@ -16,4 +16,6 @@ interface BookmarkRepository : JpaRepository<Bookmark, BookmarkId> {
         userId: UUID,
         type: BookmarkType,
     ): List<Bookmark>
+
+    fun deleteByIdUserId(userId: UUID)
 }

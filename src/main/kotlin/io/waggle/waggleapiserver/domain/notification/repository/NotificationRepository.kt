@@ -58,4 +58,6 @@ interface NotificationRepository : JpaRepository<Notification, Long> {
         @Param("userId") userId: UUID,
         @Param("now") now: Instant,
     )
+
+    fun deleteByUserId(userId: UUID)
 }

@@ -6,7 +6,10 @@ import io.waggle.waggleapiserver.domain.user.enums.Position
 import io.waggle.waggleapiserver.domain.user.enums.Skill
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import java.util.UUID
 
 interface PostRepository : JpaRepository<Post, Long> {
     @Query(
@@ -37,4 +40,16 @@ interface PostRepository : JpaRepository<Post, Long> {
     fun findByIdInOrderByCreatedAtDesc(ids: List<Long>): List<Post>
 
     fun findByTeamIdOrderByCreatedAtDesc(teamId: Long): List<Post>
+
+    @Modifying
+    @Query(
+        """
+        UPDATE Post p
+        SET p.deletedAt = CURRENT_TIMESTAMP
+        WHERE p.userId = :userId AND p.deletedAt IS NULL
+        """,
+    )
+    fun updateDeletedAtByUserIdAndDeletedAtIsNull(
+        @Param("userId") userId: UUID,
+    )
 }
