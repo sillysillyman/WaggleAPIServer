@@ -18,6 +18,12 @@ interface UserRepository : JpaRepository<User, UUID> {
     ): User?
 
     @Query(
+        "SELECT * FROM users WHERE id = :id",
+        nativeQuery = true,
+    )
+    fun findByIdIgnoringDeletion(id: UUID): User?
+
+    @Query(
         """
         SELECT * FROM users
         WHERE provider = :provider

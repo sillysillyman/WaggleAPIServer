@@ -79,14 +79,11 @@ class MessageService(
         val slicedMessages = if (hasNext) messages.take(size) else messages
 
         val partner =
-            userRepository
-                .findById(partnerId)
-                .orElseThrow {
-                    BusinessException(
-                        ErrorCode.ENTITY_NOT_FOUND,
-                        "Partner not found: $partnerId",
-                    )
-                }
+            userRepository.findByIdIgnoringDeletion(partnerId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Partner not found: $partnerId",
+                )
         val userById = mapOf(user.id to user, partner.id to partner)
 
         val data =
