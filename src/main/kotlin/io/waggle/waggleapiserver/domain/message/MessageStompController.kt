@@ -13,7 +13,7 @@ import java.security.Principal
 class MessageStompController(
     private val messageService: MessageService,
 ) {
-    @MessageMapping(".send")
+    @MessageMapping("/send")
     fun send(
         @Payload request: MessageSendRequest,
         principal: Principal,
