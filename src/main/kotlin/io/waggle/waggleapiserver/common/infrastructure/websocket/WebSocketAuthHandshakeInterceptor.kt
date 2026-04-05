@@ -1,9 +1,7 @@
 package io.waggle.waggleapiserver.common.infrastructure.websocket
 
 import io.waggle.waggleapiserver.common.util.logger
-import io.waggle.waggleapiserver.domain.user.repository.UserRepository
-import io.waggle.waggleapiserver.security.jwt.JwtProvider
-import io.waggle.waggleapiserver.security.jwt.JwtUtil
+import io.waggle.waggleapiserver.domain.auth.service.AuthService
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.server.ServletServerHttpRequest
@@ -13,9 +11,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor
 
 @Component
 class WebSocketAuthHandshakeInterceptor(
-    private val jwtProvider: JwtProvider,
-    private val jwtUtil: JwtUtil,
-    private val userRepository: UserRepository,
+    private val authService: AuthService,
 ) : HandshakeInterceptor {
     override fun beforeHandshake(
         request: ServerHttpRequest,
@@ -29,37 +25,20 @@ class WebSocketAuthHandshakeInterceptor(
                 return false
             }
 
-        // 헤더에서 토큰 추출 시도
-        var token = jwtUtil.extractTokenFromRequest(servletRequest)
-
-        // 헤더에 없으면 쿼리 파라미터에서 추출
+        val token = servletRequest.getParameter("token")
         if (token == null) {
-            token = servletRequest.getParameter("token")
-            logger.info("Token extracted from query parameter")
-        } else {
-            logger.info("Token extracted from Authorization header")
-        }
-
-        // 토큰이 없거나 유효하지 않으면 연결 거부
-        if (token == null) {
-            logger.warn("No token found in request")
-            return false
-        }
-        if (!jwtProvider.isTokenValid(token)) {
-            logger.warn("Invalid token")
+            logger.warn("No WebSocket token found in request")
             return false
         }
 
-        val userId = jwtProvider.getUserIdFromToken(token)
-
-        // 실제 존재하는 유저인지 확인
-        if (!userRepository.existsByIdAndDeletedAtIsNull(userId)) {
-            logger.warn("User not found: $userId")
-            return false
+        return try {
+            val userId = authService.validateAndConsumeWsToken(token)
+            attributes["userId"] = userId
+            true
+        } catch (e: Exception) {
+            logger.warn("WebSocket token validation failed: ${e.message}")
+            false
         }
-
-        attributes["userId"] = userId
-        return true
     }
 
     override fun afterHandshake(

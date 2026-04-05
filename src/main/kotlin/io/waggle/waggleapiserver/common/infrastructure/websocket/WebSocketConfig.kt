@@ -10,6 +10,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 class WebSocketConfig(
     private val webSocketAuthHandshakeInterceptor: WebSocketAuthHandshakeInterceptor,
+    private val webSocketAuthHandshakeHandler: WebSocketAuthHandshakeHandler,
 ) : WebSocketMessageBrokerConfigurer {
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         // 순수 WebSocket 엔드포인트
@@ -20,6 +21,7 @@ class WebSocketConfig(
                 "http://localhost:5173",
                 "https://waggle.lol",
             ).addInterceptors(webSocketAuthHandshakeInterceptor)
+            .setHandshakeHandler(webSocketAuthHandshakeHandler)
 
         // SockJS 폴백 엔드포인트
         registry
@@ -29,6 +31,7 @@ class WebSocketConfig(
                 "http://localhost:5173",
                 "https://waggle.lol",
             ).addInterceptors(webSocketAuthHandshakeInterceptor)
+            .setHandshakeHandler(webSocketAuthHandshakeHandler)
             .withSockJS()
     }
 
