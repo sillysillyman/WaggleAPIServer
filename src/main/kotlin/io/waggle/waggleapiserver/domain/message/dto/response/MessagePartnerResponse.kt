@@ -2,6 +2,7 @@ package io.waggle.waggleapiserver.domain.message.dto.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.waggle.waggleapiserver.domain.user.User
+import io.waggle.waggleapiserver.domain.user.enums.Position
 import java.util.UUID
 
 @Schema(description = "메시지 상대 정보")
@@ -10,6 +11,8 @@ data class MessagePartnerResponse(
     val userId: UUID,
     @Schema(description = "사용자명", example = "testUser")
     val username: String?,
+    @Schema(description = "포지션", example = "BACKEND")
+    val position: Position?,
     @Schema(description = "프로필 이미지 URL", example = "https://example.com/image.png")
     val profileImageUrl: String?,
 ) {
@@ -18,6 +21,7 @@ data class MessagePartnerResponse(
             MessagePartnerResponse(
                 userId = user.id,
                 username = user.username,
+                position = user.username?.let { user.position },
                 profileImageUrl = user.profileImageUrl,
             )
     }
