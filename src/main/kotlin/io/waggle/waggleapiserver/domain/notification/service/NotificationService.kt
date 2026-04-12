@@ -2,11 +2,10 @@ package io.waggle.waggleapiserver.domain.notification.service
 
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
-import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationCountResponse
 import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationResponse
 import io.waggle.waggleapiserver.domain.notification.repository.NotificationRepository
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.NotificationTeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
@@ -18,7 +17,6 @@ import java.time.Instant
 @Service
 @Transactional(readOnly = true)
 class NotificationService(
-    private val memberRepository: MemberRepository,
     private val notificationRepository: NotificationRepository,
     private val teamRepository: TeamRepository,
     private val userRepository: UserRepository,
@@ -37,10 +35,6 @@ class NotificationService(
 
         val teamIds = slicedNotifications.mapNotNull { it.teamId }.distinct()
         val teamById = teamRepository.findAllById(teamIds).associateBy { it.id }
-        val memberCountByTeamId =
-            memberRepository
-                .countByTeamIds(teamIds)
-                .associate { it.teamId to it.count.toInt() }
 
         val triggeredByUserIds = slicedNotifications.mapNotNull { it.triggeredBy }
         val triggeredByUserById =
@@ -50,7 +44,7 @@ class NotificationService(
             slicedNotifications.map { notification ->
                 val team =
                     notification.teamId?.let { teamById[it] }?.let {
-                        TeamResponse.of(it, memberCountByTeamId[it.id] ?: 0)
+                        NotificationTeamResponse.from(it)
                     }
 
                 val triggeredBy =
@@ -83,7 +77,10 @@ class NotificationService(
         )
 
     @Transactional
-    fun readNotifications(user: User, notificationIds: List<Long>) {
+    fun readNotifications(
+        user: User,
+        notificationIds: List<Long>,
+    ) {
         notificationRepository.markAsReadByIds(user.id, notificationIds, Instant.now())
     }
 
