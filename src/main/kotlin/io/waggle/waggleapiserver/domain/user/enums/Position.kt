@@ -1,12 +1,13 @@
 package io.waggle.waggleapiserver.domain.user.enums
 
 enum class Position {
+    PM,
+    DESIGNER,
     FRONTEND,
     BACKEND,
-    DESIGNER,
-    IOS,
-    ANDROID,
-    DEVOPS,
-    PLANNER,
     MARKETER,
+    OTHER,
+//    IOS,
+//    ANDROID,
+//    DEVOPS,
 }
