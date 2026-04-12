@@ -10,10 +10,11 @@ import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
+import io.waggle.waggleapiserver.domain.application.dto.response.TeamApplicationResponse
 import io.waggle.waggleapiserver.domain.application.service.ApplicationService
 import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.service.MemberService
-import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.TeamPostSimpleResponse
 import io.waggle.waggleapiserver.domain.post.service.PostService
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamStatusUpdateRequest
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamUpsertRequest
@@ -25,8 +26,8 @@ import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -95,7 +96,7 @@ class TeamController(
         @RequestParam(required = false) postId: Long?,
         @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
-    ): CursorResponse<ApplicationResponse> = applicationService.getTeamApplications(teamId, postId, cursorQuery, user)
+    ): CursorResponse<TeamApplicationResponse> = applicationService.getTeamApplications(teamId, postId, cursorQuery, user)
 
     @AllowIncompleteProfile
     @Operation(summary = "팀 모집글 목록 조회")
@@ -103,7 +104,7 @@ class TeamController(
     fun getTeamPosts(
         @PathVariable teamId: Long,
         @CurrentUser user: User?,
-    ): List<PostSimpleResponse> = postService.getTeamPosts(teamId, user)
+    ): List<TeamPostSimpleResponse> = postService.getTeamPosts(teamId, user)
 
     @Operation(summary = "팀 수정")
     @PutMapping("/{teamId}")

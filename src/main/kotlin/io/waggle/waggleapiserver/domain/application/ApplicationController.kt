@@ -3,7 +3,7 @@ package io.waggle.waggleapiserver.domain.application
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
-import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
+import io.waggle.waggleapiserver.domain.application.dto.response.TeamApplicationResponse
 import io.waggle.waggleapiserver.domain.application.service.ApplicationService
 import io.waggle.waggleapiserver.domain.user.User
 import org.springframework.http.HttpStatus
@@ -29,7 +29,7 @@ class ApplicationController(
     fun markApplicationAsRead(
         @PathVariable applicationId: Long,
         @CurrentUser user: User,
-    ): ApplicationResponse = applicationService.markApplicationAsRead(applicationId, user)
+    ): TeamApplicationResponse = applicationService.markApplicationAsRead(applicationId, user)
 
     @Operation(
         summary = "팀 지원 승인",

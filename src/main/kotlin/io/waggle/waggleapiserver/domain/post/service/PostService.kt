@@ -13,6 +13,7 @@ import io.waggle.waggleapiserver.domain.post.dto.request.PostGetQuery
 import io.waggle.waggleapiserver.domain.post.dto.request.PostUpsertRequest
 import io.waggle.waggleapiserver.domain.post.dto.response.PostDetailResponse
 import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.TeamPostSimpleResponse
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.recruitment.Recruitment
 import io.waggle.waggleapiserver.domain.recruitment.RecruitmentStatus
@@ -182,7 +183,7 @@ class PostService(
     fun getTeamPosts(
         teamId: Long,
         user: User?,
-    ): List<PostSimpleResponse> {
+    ): List<TeamPostSimpleResponse> {
         val posts = postRepository.findByTeamIdOrderByCreatedAtDesc(teamId)
 
         val authorIds = posts.map { it.userId }.distinct()
@@ -231,7 +232,7 @@ class PostService(
                 } else {
                     null to null
                 }
-            PostSimpleResponse.of(
+            TeamPostSimpleResponse.of(
                 post,
                 UserSimpleResponse.from(author),
                 recruitments,

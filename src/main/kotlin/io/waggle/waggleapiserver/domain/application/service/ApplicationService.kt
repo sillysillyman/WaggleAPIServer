@@ -9,6 +9,7 @@ import io.waggle.waggleapiserver.domain.application.ApplicationRead
 import io.waggle.waggleapiserver.domain.application.ApplicationStatus
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
+import io.waggle.waggleapiserver.domain.application.dto.response.TeamApplicationResponse
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationReadRepository
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
 import io.waggle.waggleapiserver.domain.member.Member
@@ -106,7 +107,7 @@ class ApplicationService(
     fun markApplicationAsRead(
         applicationId: Long,
         user: User,
-    ): ApplicationResponse {
+    ): TeamApplicationResponse {
         val application =
             applicationRepository.findByIdOrNull(applicationId)
                 ?: throw BusinessException(
@@ -135,7 +136,7 @@ class ApplicationService(
                     "User not found: ${application.userId}",
                 )
 
-        return ApplicationResponse.of(application, applicant, isRead = true)
+        return TeamApplicationResponse.of(application, applicant, isRead = true)
     }
 
     fun getUserApplications(user: User): List<ApplicationResponse> {
@@ -148,7 +149,7 @@ class ApplicationService(
         postId: Long?,
         cursorQuery: CursorGetQuery,
         user: User,
-    ): CursorResponse<ApplicationResponse> {
+    ): CursorResponse<TeamApplicationResponse> {
         val member =
             memberRepository.findByUserIdAndTeamId(user.id, teamId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Member not found")
@@ -193,7 +194,7 @@ class ApplicationService(
                             ErrorCode.ENTITY_NOT_FOUND,
                             "User not found: ${application.userId}",
                         )
-                ApplicationResponse.of(
+                TeamApplicationResponse.of(
                     application,
                     applicant,
                     isRead = readApplicationIdSet.contains(application.id),
@@ -250,7 +251,6 @@ class ApplicationService(
                 triggeredBy = application.userId,
             ),
         )
-
     }
 
     @Transactional
@@ -279,7 +279,6 @@ class ApplicationService(
                 triggeredBy = user.id,
             ),
         )
-
     }
 
     @Transactional

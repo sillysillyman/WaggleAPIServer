@@ -15,7 +15,7 @@ import io.waggle.waggleapiserver.domain.memberreview.enums.ReviewType
 import io.waggle.waggleapiserver.domain.memberreview.repository.MemberReviewRepository
 import io.waggle.waggleapiserver.domain.notification.repository.NotificationRepository
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
-import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
+import io.waggle.waggleapiserver.domain.team.dto.response.UserTeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.dto.request.MemberUpdateVisibilityRequest
@@ -115,7 +115,7 @@ class UserService(
     fun getUserTeams(
         userId: UUID,
         includeHidden: Boolean = false,
-    ): List<TeamResponse> {
+    ): List<UserTeamResponse> {
         val members =
             if (includeHidden) {
                 memberRepository.findByUserIdOrderByRoleAscCreatedAtAsc(userId)
@@ -130,11 +130,10 @@ class UserService(
 
         return members.mapNotNull { member ->
             teamById[member.teamId]?.let { team ->
-                TeamResponse.of(
+                UserTeamResponse.of(
                     team = team,
                     memberCount = memberCountByTeamId[team.id] ?: 0,
-                    position = member.position,
-                    role = member.role,
+                    member = member,
                     visible = if (includeHidden) member.visible else null,
                 )
             }
