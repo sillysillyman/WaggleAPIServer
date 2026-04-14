@@ -6,7 +6,6 @@ import io.waggle.waggleapiserver.domain.memberreview.enums.ReviewType
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface MemberReviewRepository : JpaRepository<MemberReview, Long> {
@@ -27,18 +26,6 @@ interface MemberReviewRepository : JpaRepository<MemberReview, Long> {
 
     @Query(
         """
-        SELECT mr.revieweeId AS revieweeId, mr.type AS type, COUNT(mr) AS count
-        FROM MemberReview mr
-        WHERE mr.revieweeId IN :revieweeIds
-        GROUP BY mr.revieweeId, mr.type
-        """,
-    )
-    fun countByRevieweeIdInGroupByType(
-        @Param("revieweeIds") revieweeIds: List<UUID>,
-    ): List<MemberReviewCount>
-
-    @Query(
-        """
         SELECT t AS tag, COUNT(t) AS count
         FROM MemberReview mr JOIN mr.tags t
         WHERE mr.revieweeId = :revieweeId AND mr.type = :type
@@ -47,8 +34,8 @@ interface MemberReviewRepository : JpaRepository<MemberReview, Long> {
         """,
     )
     fun countTagsByRevieweeIdAndType(
-        @Param("revieweeId") revieweeId: UUID,
-        @Param("type") type: ReviewType,
+        revieweeId: UUID,
+        type: ReviewType,
         pageable: Pageable,
     ): List<MemberReviewTagCount>
 }

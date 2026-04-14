@@ -27,6 +27,8 @@ import java.util.UUID
         Index(name = "idx_applications_user", columnList = "user_id"),
         Index(name = "idx_applications_team_status", columnList = "team_id, status"),
         Index(name = "idx_applications_post", columnList = "post_id"),
+        Index(name = "idx_applications_team_priority_id", columnList = "team_id, status_priority, id DESC"),
+        Index(name = "idx_applications_post_priority_id", columnList = "post_id, status_priority, id DESC"),
     ],
 )
 class Application(
@@ -47,6 +49,9 @@ class Application(
     @Column(columnDefinition = "VARCHAR(5000)")
     var detail: String?,
 ) : AuditingEntity() {
+    @Column(name = "status_priority", insertable = false, updatable = false, columnDefinition = "TINYINT")
+    val statusPriority: Int = 0
+
     @ElementCollection
     @CollectionTable(name = "application_portfolio_urls", joinColumns = [JoinColumn(name = "application_id")])
     @Column(name = "portfolio_url", nullable = false, columnDefinition = "VARCHAR(2048)")

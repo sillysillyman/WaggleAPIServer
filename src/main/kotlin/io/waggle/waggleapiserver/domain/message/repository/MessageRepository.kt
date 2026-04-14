@@ -5,7 +5,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
-import java.time.Instant
 import java.util.UUID
 
 interface MessageRepository : JpaRepository<Message, Long> {
@@ -77,15 +76,14 @@ interface MessageRepository : JpaRepository<Message, Long> {
     @Modifying
     @Query(
         """
-        UPDATE Message m
-        SET m.readAt = :readAt
-        WHERE m.senderId = :senderId AND m.receiverId = :receiverId
-        AND m.readAt IS NULL
+        UPDATE messages SET read_at = UTC_TIMESTAMP(6)
+        WHERE sender_id = :senderId AND receiver_id = :receiverId
+        AND read_at IS NULL
         """,
+        nativeQuery = true,
     )
     fun markAllAsRead(
         senderId: UUID,
         receiverId: UUID,
-        readAt: Instant,
     ): Int
 }

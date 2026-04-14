@@ -3,7 +3,6 @@ package io.waggle.waggleapiserver.domain.conversation.service
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.domain.conversation.Conversation
-import io.waggle.waggleapiserver.domain.conversation.dto.response.ConversationPartnerResponse
 import io.waggle.waggleapiserver.domain.conversation.dto.response.ConversationResponse
 import io.waggle.waggleapiserver.domain.conversation.repository.ConversationRepository
 import io.waggle.waggleapiserver.domain.message.Message
@@ -13,7 +12,6 @@ import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 import java.util.UUID
 
 @Service
@@ -62,19 +60,10 @@ class ConversationService(
                 val lastMessage =
                     searchedMessageByPartnerId[conversation.partnerId]
                         ?: messageById[conversation.lastMessageId]!!
-                ConversationResponse(
-                    partner =
-                        partnerById[conversation.partnerId]?.let {
-                            ConversationPartnerResponse.from(it)
-                        }
-                            ?: ConversationPartnerResponse(
-                                userId = conversation.partnerId,
-                                username = null,
-                                profileImageUrl = null,
-                            ),
-                    unreadCount = conversation.unreadCount,
-                    lastReadMessageId = conversation.lastReadMessageId,
-                    lastMessage = ConversationResponse.LastMessage.from(lastMessage),
+                ConversationResponse.of(
+                    conversation = conversation,
+                    partner = partnerById[conversation.partnerId],
+                    lastMessage = lastMessage,
                 )
             }
 
@@ -107,7 +96,6 @@ class ConversationService(
         messageRepository.markAllAsRead(
             senderId = partnerId,
             receiverId = user.id,
-            readAt = Instant.now(),
         )
 
         val lastReadMessageId =

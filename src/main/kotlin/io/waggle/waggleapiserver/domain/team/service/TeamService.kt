@@ -2,20 +2,20 @@ package io.waggle.waggleapiserver.domain.team.service
 
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
-import io.waggle.waggleapiserver.common.storage.event.ImageDeleteEvent
-import io.waggle.waggleapiserver.domain.notification.event.TeamCompletedEvent
-import io.waggle.waggleapiserver.domain.team.enums.TeamStatus
 import io.waggle.waggleapiserver.common.storage.StorageClient
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
+import io.waggle.waggleapiserver.common.storage.event.ImageDeleteEvent
 import io.waggle.waggleapiserver.domain.member.Member
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.dto.response.MemberResponse
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
+import io.waggle.waggleapiserver.domain.notification.event.TeamCompletedEvent
 import io.waggle.waggleapiserver.domain.team.Team
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamStatusUpdateRequest
 import io.waggle.waggleapiserver.domain.team.dto.request.TeamUpsertRequest
 import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
+import io.waggle.waggleapiserver.domain.team.enums.TeamStatus
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
@@ -99,14 +99,26 @@ class TeamService(
         teamId: Long,
         user: User?,
     ): List<MemberResponse> {
-        val isTeamMember = user?.let { memberRepository.existsByUserIdAndTeamId(it.id, teamId) } ?: false
+        val isTeamMember =
+            user?.let { memberRepository.existsByUserIdAndTeamId(it.id, teamId) } ?: false
 
         val activeMembers = memberRepository.findByTeamIdOrderByRoleAscCreatedAtAsc(teamId)
         val deletedMembers =
-            if (isTeamMember) {
-                memberRepository.findByTeamIdAndDeletedAtIsNotNullOrderByRoleAscCreatedAtAsc(teamId)
-            } else {
-                emptyList()
+            when {
+                isTeamMember ->
+                    memberRepository.findByTeamIdAndDeletedAtIsNotNullOrderByRoleAscCreatedAtAsc(
+                        teamId,
+                    )
+
+                user != null ->
+                    listOfNotNull(
+                        memberRepository.findByUserIdAndTeamIdAndDeletedAtIsNotNull(
+                            user.id,
+                            teamId,
+                        ),
+                    )
+
+                else -> emptyList()
             }
         val members = activeMembers + deletedMembers
 
@@ -196,7 +208,6 @@ class TeamService(
         if (request.status == TeamStatus.COMPLETED) {
             eventPublisher.publishEvent(TeamCompletedEvent(teamId = teamId))
         }
-
     }
 
     @Transactional

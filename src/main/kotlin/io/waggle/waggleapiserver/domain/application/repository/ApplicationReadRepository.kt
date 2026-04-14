@@ -3,7 +3,6 @@ package io.waggle.waggleapiserver.domain.application.repository
 import io.waggle.waggleapiserver.domain.application.ApplicationRead
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface ApplicationReadRepository : JpaRepository<ApplicationRead, Long> {
@@ -20,8 +19,8 @@ interface ApplicationReadRepository : JpaRepository<ApplicationRead, Long> {
         """,
     )
     fun findReadApplicationIds(
-        @Param("userId") userId: UUID,
-        @Param("applicationIds") applicationIds: List<Long>,
+        userId: UUID,
+        applicationIds: List<Long>,
     ): List<Long>
 
     fun findByApplicationIdInAndUserIdIn(

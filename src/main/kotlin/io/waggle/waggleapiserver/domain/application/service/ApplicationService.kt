@@ -156,6 +156,14 @@ class ApplicationService(
         member.checkMemberRole(MemberRole.MANAGER)
 
         val pageable = PageRequest.of(0, cursorQuery.size + 1)
+        val cursorStatusPriority =
+            cursorQuery.cursor?.let { cursorId ->
+                applicationRepository.findByIdOrNull(cursorId)?.statusPriority
+                    ?: throw BusinessException(
+                        ErrorCode.ENTITY_NOT_FOUND,
+                        "Application not found: $cursorId",
+                    )
+            }
         val applications =
             if (postId != null) {
                 val post =
@@ -170,9 +178,19 @@ class ApplicationService(
                         "Post $postId does not belong to team $teamId",
                     )
                 }
-                applicationRepository.findByPostIdWithCursor(postId, cursorQuery.cursor, pageable)
+                applicationRepository.findByPostIdWithCursor(
+                    postId,
+                    cursorQuery.cursor,
+                    cursorStatusPriority,
+                    pageable,
+                )
             } else {
-                applicationRepository.findByTeamIdWithCursor(teamId, cursorQuery.cursor, pageable)
+                applicationRepository.findByTeamIdWithCursor(
+                    teamId,
+                    cursorQuery.cursor,
+                    cursorStatusPriority,
+                    pageable,
+                )
             }
 
         val hasNext = applications.size > cursorQuery.size

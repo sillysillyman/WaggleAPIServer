@@ -6,8 +6,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
-import java.time.Instant
 import java.util.UUID
 
 interface NotificationRepository : JpaRepository<Notification, Long> {
@@ -29,35 +27,33 @@ interface NotificationRepository : JpaRepository<Notification, Long> {
         """,
     )
     fun findByUserIdWithCursor(
-        @Param("userId") userId: UUID,
-        @Param("cursor") cursor: Long?,
+        userId: UUID,
+        cursor: Long?,
         pageable: Pageable,
     ): List<Notification>
 
     @Modifying
     @Query(
         """
-        UPDATE Notification n SET n.readAt = :now
-        WHERE n.userId = :userId AND n.id IN :ids AND n.readAt IS NULL
+        UPDATE notifications SET read_at = UTC_TIMESTAMP(6)
+        WHERE user_id = :userId AND id IN :ids AND read_at IS NULL
         """,
+        nativeQuery = true,
     )
     fun markAsReadByIds(
-        @Param("userId") userId: UUID,
-        @Param("ids") ids: List<Long>,
-        @Param("now") now: Instant,
+        userId: UUID,
+        ids: List<Long>,
     )
 
     @Modifying
     @Query(
         """
-        UPDATE Notification n SET n.readAt = :now
-        WHERE n.userId = :userId AND n.readAt IS NULL
+        UPDATE notifications SET read_at = UTC_TIMESTAMP(6)
+        WHERE user_id = :userId AND read_at IS NULL
         """,
+        nativeQuery = true,
     )
-    fun markAllAsRead(
-        @Param("userId") userId: UUID,
-        @Param("now") now: Instant,
-    )
+    fun markAllAsRead(userId: UUID)
 
     fun deleteByUserId(userId: UUID)
 }

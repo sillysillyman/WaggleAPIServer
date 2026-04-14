@@ -43,15 +43,17 @@ data class ConversationResponse(
             lastMessage: Message,
         ): ConversationResponse =
             ConversationResponse(
-                partner = if (partner != null) {
-                    ConversationPartnerResponse.from(partner)
-                } else {
-                    ConversationPartnerResponse(
-                        userId = conversation.partnerId,
-                        username = null,
-                        profileImageUrl = null,
-                    )
-                },
+                partner =
+                    if (partner != null) {
+                        ConversationPartnerResponse.from(partner)
+                    } else {
+                        ConversationPartnerResponse(
+                            userId = conversation.partnerId,
+                            username = null,
+                            position = null,
+                            profileImageUrl = null,
+                        )
+                    },
                 unreadCount = conversation.unreadCount,
                 lastReadMessageId = conversation.lastReadMessageId,
                 lastMessage = LastMessage.from(lastMessage),

@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import java.time.Instant
 import java.util.UUID
 
@@ -35,13 +34,18 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
         """
         SELECT a FROM Application a
         WHERE a.teamId = :teamId
-        AND (:cursor IS NULL OR a.id < :cursor)
-        ORDER BY a.id DESC
+        AND (
+            :cursor IS NULL
+            OR a.statusPriority > :cursorStatusPriority
+            OR (a.statusPriority = :cursorStatusPriority AND a.id < :cursor)
+        )
+        ORDER BY a.statusPriority, a.id DESC
         """,
     )
     fun findByTeamIdWithCursor(
-        @Param("teamId") teamId: Long,
-        @Param("cursor") cursor: Long?,
+        teamId: Long,
+        cursor: Long?,
+        cursorStatusPriority: Int?,
         pageable: Pageable,
     ): List<Application>
 
@@ -49,13 +53,18 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
         """
         SELECT a FROM Application a
         WHERE a.postId = :postId
-        AND (:cursor IS NULL OR a.id < :cursor)
-        ORDER BY a.id DESC
+        AND (
+            :cursor IS NULL
+            OR a.statusPriority > :cursorStatusPriority
+            OR (a.statusPriority = :cursorStatusPriority AND a.id < :cursor)
+        )
+        ORDER BY a.statusPriority, a.id DESC
         """,
     )
     fun findByPostIdWithCursor(
-        @Param("postId") postId: Long,
-        @Param("cursor") cursor: Long?,
+        postId: Long,
+        cursor: Long?,
+        cursorStatusPriority: Int?,
         pageable: Pageable,
     ): List<Application>
 
@@ -76,21 +85,19 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
         """,
     )
     fun countUnreadApplicationsGroupByPostId(
-        @Param("userId") userId: UUID,
-        @Param("postIds") postIds: List<Long>,
+        userId: UUID,
+        postIds: List<Long>,
     ): List<PostUnreadCount>
 
     @Modifying
     @Query(
         """
-        UPDATE applications SET deleted_at = CURRENT_TIMESTAMP
+        UPDATE applications SET deleted_at = UTC_TIMESTAMP(6)
         WHERE user_id = :userId AND deleted_at IS NULL
         """,
         nativeQuery = true,
     )
-    fun updateDeletedAtByUserIdAndDeletedAtIsNull(
-        @Param("userId") userId: UUID,
-    )
+    fun updateDeletedAtByUserIdAndDeletedAtIsNull(userId: UUID)
 }
 
 interface PostApplicantCount {
