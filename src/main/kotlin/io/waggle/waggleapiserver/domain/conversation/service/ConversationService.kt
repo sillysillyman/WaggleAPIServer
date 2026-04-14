@@ -70,6 +70,7 @@ class ConversationService(
                             ?: ConversationPartnerResponse(
                                 userId = conversation.partnerId,
                                 username = null,
+                                position = null,
                                 profileImageUrl = null,
                             ),
                     unreadCount = conversation.unreadCount,
