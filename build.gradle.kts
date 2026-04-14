@@ -5,6 +5,18 @@ plugins {
     id("org.springframework.boot") version "3.5.6"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.asciidoctor.jvm.convert") version "3.3.2"
+    id("com.diffplug.spotless") version "6.25.0"
+}
+
+spotless {
+    kotlin {
+        ktlint("1.3.1")
+        target("src/**/*.kt")
+    }
+    kotlinGradle {
+        ktlint("1.3.1")
+        target("*.gradle.kts")
+    }
 }
 
 group = "io.waggle"
