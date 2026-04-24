@@ -8,6 +8,7 @@ import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.conversation.dto.response.ConversationResponse
 import io.waggle.waggleapiserver.domain.conversation.service.ConversationService
 import io.waggle.waggleapiserver.domain.user.User
+import jakarta.validation.Valid
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -29,7 +30,7 @@ class ConversationController(
     @GetMapping
     fun getConversations(
         @RequestParam q: String?,
-        @ParameterObject cursorQuery: CursorGetQuery,
+        @Valid @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
     ): CursorResponse<ConversationResponse> = conversationService.getConversations(q, cursorQuery, user)
 

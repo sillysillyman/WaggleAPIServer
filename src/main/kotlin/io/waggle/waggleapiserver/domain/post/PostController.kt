@@ -46,7 +46,7 @@ class PostController(
     @GetMapping
     fun getPosts(
         @ParameterObject query: PostGetQuery,
-        @ParameterObject cursorQuery: CursorGetQuery,
+        @Valid @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User?,
     ): CursorResponse<PostSimpleResponse> = postService.getPosts(query, cursorQuery, user)
 

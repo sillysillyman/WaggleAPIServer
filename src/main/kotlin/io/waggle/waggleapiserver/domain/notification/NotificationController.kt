@@ -29,7 +29,7 @@ class NotificationController(
     @Operation(summary = "알림 목록 조회")
     @GetMapping
     fun getNotifications(
-        @ParameterObject cursorQuery: CursorGetQuery,
+        @Valid @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
     ): CursorResponse<NotificationResponse> = notificationService.getUserNotifications(cursorQuery, user)
 
