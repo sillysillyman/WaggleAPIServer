@@ -1,6 +1,7 @@
 package io.waggle.waggleapiserver.common.infrastructure.websocket
 
 import org.springframework.context.annotation.Configuration
+import org.springframework.messaging.simp.config.ChannelRegistration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
@@ -11,6 +12,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 class WebSocketConfig(
     private val webSocketAuthHandshakeInterceptor: WebSocketAuthHandshakeInterceptor,
     private val webSocketAuthHandshakeHandler: WebSocketAuthHandshakeHandler,
+    private val stompRateLimitInterceptor: StompRateLimitInterceptor,
 ) : WebSocketMessageBrokerConfigurer {
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         // 순수 WebSocket 엔드포인트
@@ -39,5 +41,9 @@ class WebSocketConfig(
         registry.setApplicationDestinationPrefixes("/app")
         registry.enableSimpleBroker("/queue", "/topic")
         registry.setUserDestinationPrefix("/user")
+    }
+
+    override fun configureClientInboundChannel(registration: ChannelRegistration) {
+        registration.interceptors(stompRateLimitInterceptor)
     }
 }
