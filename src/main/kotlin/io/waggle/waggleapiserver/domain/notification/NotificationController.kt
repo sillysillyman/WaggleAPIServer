@@ -6,7 +6,7 @@ import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.notification.dto.request.ReadNotificationsRequest
-import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationCountResponse
+import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationCountsResponse
 import io.waggle.waggleapiserver.domain.notification.dto.response.NotificationResponse
 import io.waggle.waggleapiserver.domain.notification.service.NotificationService
 import io.waggle.waggleapiserver.domain.user.User
@@ -35,9 +35,9 @@ class NotificationController(
 
     @Operation(summary = "알림 개수 조회")
     @GetMapping("/count")
-    fun getNotificationCount(
+    fun getNotificationCounts(
         @CurrentUser user: User,
-    ): NotificationCountResponse = notificationService.getNotificationCount(user)
+    ): NotificationCountsResponse = notificationService.getNotificationCounts(user)
 
     @Operation(summary = "알림 읽음 처리")
     @PatchMapping("/read")
