@@ -10,8 +10,6 @@ import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncomple
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
-import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
-import io.waggle.waggleapiserver.domain.application.service.ApplicationService
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.bookmark.service.BookmarkService
@@ -48,7 +46,6 @@ import java.util.UUID
 @RequestMapping("/users")
 @RestController
 class UserController(
-    private val applicationService: ApplicationService,
     private val bookmarkService: BookmarkService,
     private val followService: FollowService,
     private val userService: UserService,
@@ -96,12 +93,6 @@ class UserController(
     fun getMyProfile(
         @CurrentUser user: User,
     ): UserProfileResponse = userService.getUserProfile(user)
-
-    @Operation(summary = "본인 지원 목록 조회")
-    @GetMapping("/me/applications")
-    fun getMyApplications(
-        @CurrentUser user: User,
-    ): List<ApplicationResponse> = applicationService.getUserApplications(user)
 
     @Operation(
         summary = "본인 북마크 목록 조회",

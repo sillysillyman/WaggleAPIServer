@@ -31,7 +31,7 @@ data class ApplicationResponse(
     val updatedAt: Instant,
 ) {
     companion object {
-        fun of(application: Application): ApplicationResponse =
+        fun from(application: Application): ApplicationResponse =
             ApplicationResponse(
                 applicationId = application.id,
                 position = application.position,

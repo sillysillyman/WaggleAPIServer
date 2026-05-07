@@ -62,4 +62,16 @@ class Application(
         }
         this.status = status
     }
+
+    fun update(
+        detail: String?,
+        portfolioUrls: List<String>,
+    ) {
+        if (this.status != ApplicationStatus.PENDING) {
+            throw BusinessException(ErrorCode.INVALID_STATE, "status is not PENDING")
+        }
+        this.detail = detail
+        this.portfolioUrls.clear()
+        this.portfolioUrls.addAll(portfolioUrls)
+    }
 }

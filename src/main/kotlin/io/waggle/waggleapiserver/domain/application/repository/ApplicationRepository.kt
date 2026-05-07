@@ -30,6 +30,31 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
 
     fun findByUserId(userId: UUID): List<Application>
 
+    @Query(
+        """
+        SELECT a FROM Application a
+        WHERE a.userId = :userId
+        AND (:status IS NULL OR a.status = :status)
+        AND (:cursor IS NULL OR a.id < :cursor)
+        ORDER BY a.id DESC
+        """,
+    )
+    fun findByUserIdWithCursor(
+        userId: UUID,
+        status: ApplicationStatus?,
+        cursor: Long?,
+        pageable: Pageable,
+    ): List<Application>
+
+    @Query(
+        """
+        SELECT a.status AS status, COUNT(a) AS count
+        FROM Application a WHERE a.userId = :userId
+        GROUP BY a.status
+        """,
+    )
+    fun countByUserIdGroupByStatus(userId: UUID): List<UserApplicationStatusCount>
+
     fun findByStatusAndCreatedAtBetween(
         status: ApplicationStatus,
         createdAtStart: Instant,
@@ -157,4 +182,9 @@ interface PostApplicantCount {
 interface PostUnreadCount {
     val postId: Long
     val unreadCount: Long
+}
+
+interface UserApplicationStatusCount {
+    val status: ApplicationStatus
+    val count: Long
 }
