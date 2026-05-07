@@ -27,7 +27,7 @@ class Post(
     val id: Long = 0,
     @Column(nullable = false)
     var title: String,
-    @Column(nullable = false, columnDefinition = "VARCHAR(5000)")
+    @Column(nullable = false, columnDefinition = "TEXT")
     var content: String,
     @Column(name = "user_id", nullable = false, updatable = false)
     val userId: UUID,

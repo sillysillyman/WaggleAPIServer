@@ -4,6 +4,9 @@ import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
+import io.waggle.waggleapiserver.common.storage.StorageClient
+import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
+import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
@@ -35,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true)
 class PostService(
+    private val storageClient: StorageClient,
     private val applicationRepository: ApplicationRepository,
     private val bookmarkRepository: BookmarkRepository,
     private val memberRepository: MemberRepository,
@@ -90,6 +94,15 @@ class PostService(
             TeamResponse.of(team, memberCount, isMember = true),
             savedRecruitments.map { RecruitmentResponse.from(it) },
         )
+    }
+
+    fun generateContentImagePresignedUrl(request: PresignedUrlRequest): PresignedUrlResponse {
+        val presignedUploadUrl =
+            storageClient.generateUploadUrl(
+                "posts",
+                request.contentType,
+            )
+        return PresignedUrlResponse.from(presignedUploadUrl)
     }
 
     fun getPosts(
