@@ -6,6 +6,7 @@ import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
+import io.waggle.waggleapiserver.common.infrastructure.persistence.RequireCompleteProfile
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
@@ -65,11 +66,11 @@ class TeamController(
         @CurrentUser user: User,
     ): ApplicationResponse = applicationService.applyToTeam(teamId, request, user)
 
+    @RequireCompleteProfile
     @Operation(summary = "팀 프로필 이미지 업로드용 Presigned URL 생성")
     @PostMapping("/profile-image/presigned-url")
     fun generateProfileImagePresignedUrl(
         @Valid @RequestBody request: PresignedUrlRequest,
-        @CurrentUser user: User,
     ): PresignedUrlResponse = teamService.generateProfileImagePresignedUrl(request)
 
     @AllowIncompleteProfile
