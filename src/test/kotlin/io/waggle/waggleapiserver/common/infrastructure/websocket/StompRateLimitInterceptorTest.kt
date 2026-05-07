@@ -58,10 +58,10 @@ class StompRateLimitInterceptorTest {
     }
 
     @Test
-    fun `한도 이내의 SEND는 모두 통과`() {
+    fun `짧은 한도 이내의 SEND는 모두 통과`() {
         val user = randomUser()
 
-        repeat(60) {
+        repeat(30) {
             val message = stompMessage(StompCommand.SEND, destination = "/app/message/send", user = user)
             val result = interceptor.preSend(message, channel)
             assertThat(result).isSameAs(message)
@@ -70,9 +70,9 @@ class StompRateLimitInterceptorTest {
     }
 
     @Test
-    fun `한도 초과 시 drop되고 사용자에게 에러 알림 전송`() {
+    fun `짧은 한도 초과 시 drop되고 사용자에게 에러 알림 전송`() {
         val user = randomUser()
-        repeat(60) {
+        repeat(30) {
             interceptor.preSend(
                 stompMessage(StompCommand.SEND, destination = "/app/message/send", user = user),
                 channel,
@@ -96,7 +96,7 @@ class StompRateLimitInterceptorTest {
     fun `사용자별 버킷이 독립적으로 관리됨`() {
         val userA = randomUser()
         val userB = randomUser()
-        repeat(60) {
+        repeat(30) {
             interceptor.preSend(
                 stompMessage(StompCommand.SEND, destination = "/app/message/send", user = userA),
                 channel,
