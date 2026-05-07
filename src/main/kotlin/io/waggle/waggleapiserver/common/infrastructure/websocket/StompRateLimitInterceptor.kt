@@ -27,7 +27,7 @@ class StompRateLimitInterceptor(
 
     @Scheduled(fixedRate = 600_000)
     fun cleanUpExpiredBuckets() {
-        buckets.entries.removeIf { it.value.availableTokens == CAPACITY }
+        buckets.entries.removeIf { it.value.availableTokens == SHORT_CAPACITY }
     }
 
     override fun preSend(
@@ -62,13 +62,22 @@ class StompRateLimitInterceptor(
             .addLimit(
                 Bandwidth
                     .builder()
-                    .capacity(CAPACITY)
-                    .refillGreedy(CAPACITY, Duration.ofMinutes(1))
+                    .capacity(SHORT_CAPACITY)
+                    .refillGreedy(SHORT_CAPACITY, SHORT_WINDOW)
+                    .build(),
+            ).addLimit(
+                Bandwidth
+                    .builder()
+                    .capacity(LONG_CAPACITY)
+                    .refillGreedy(LONG_CAPACITY, LONG_WINDOW)
                     .build(),
             ).build()
 
     companion object {
-        private const val CAPACITY = 60L
+        private const val SHORT_CAPACITY = 30L
+        private const val LONG_CAPACITY = 60L
+        private val SHORT_WINDOW: Duration = Duration.ofSeconds(10)
+        private val LONG_WINDOW: Duration = Duration.ofMinutes(1)
         private const val RATE_LIMITED_DESTINATION = "/app/message/send"
         private const val ERROR_DESTINATION = "/queue/errors"
     }
