@@ -12,11 +12,9 @@ import java.util.UUID
 @Schema(description = "사용자 프로필 응답 DTO")
 data class UserProfileResponse(
     @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
-    val userId: UUID,
+    val id: UUID,
     @Schema(description = "사용자명", example = "testUser")
     val username: String,
-    @Schema(description = "이메일", example = "testUser@gmail.com")
-    val email: String,
     @Schema(description = "협업 온도", example = "36.5")
     val temperature: Double,
     @Schema(
@@ -54,9 +52,8 @@ data class UserProfileResponse(
             topLikeTags: List<MemberReviewTagCount>,
         ): UserProfileResponse =
             UserProfileResponse(
-                userId = user.id,
+                id = user.id,
                 username = user.username!!,
-                email = user.email,
                 temperature = user.temperature,
                 profileImageUrl = user.profileImageUrl,
                 position = user.position!!,
