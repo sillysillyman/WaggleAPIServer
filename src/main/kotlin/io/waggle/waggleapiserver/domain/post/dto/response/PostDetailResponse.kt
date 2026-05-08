@@ -28,7 +28,7 @@ data class PostDetailResponse(
     @Schema(description = "모집 정보 목록")
     val recruitments: List<RecruitmentResponse>,
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Schema(description = "현재 사용자의 이 모집글에 대한 지원 상태 (지원 안 했으면 응답에서 제외)")
+    @Schema(description = "현재 사용자의 이 모집글에 대한 지원 상태")
     val applicationStatus: ApplicationStatus? = null,
     @Schema(description = "모집글 생성일시", example = "2025-11-16T12:30:45.123456Z")
     val createdAt: Instant,
