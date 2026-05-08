@@ -82,15 +82,10 @@ class ApplicationService(
             throw BusinessException(ErrorCode.INVALID_STATE, "$position is no longer recruiting")
         }
 
-        if (applicationRepository.existsByPostIdAndUserIdAndPosition(
-                postId,
-                user.id,
-                position,
-            )
-        ) {
+        if (applicationRepository.existsByPostIdAndUserId(postId, user.id)) {
             throw BusinessException(
                 ErrorCode.DUPLICATE_RESOURCE,
-                "Already applied to post: $postId, position: $position",
+                "Already applied to post: $postId",
             )
         }
 
@@ -150,7 +145,7 @@ class ApplicationService(
                     "User not found: ${application.userId}",
                 )
 
-        return TeamApplicationResponse.of(application, applicant, isRead = true)
+        return TeamApplicationResponse.of(application, applicant, read = true)
     }
 
     fun getUserApplications(
@@ -286,7 +281,7 @@ class ApplicationService(
                 TeamApplicationResponse.of(
                     application,
                     applicant,
-                    isRead = readApplicationIdSet.contains(application.id),
+                    read = readApplicationIdSet.contains(application.id),
                 )
             }
 

@@ -91,7 +91,7 @@ class PostService(
         return PostDetailResponse.of(
             savedPost,
             UserSimpleResponse.from(user),
-            TeamResponse.of(team, memberCount, isMember = true),
+            TeamResponse.of(team, memberCount, member.role),
             savedRecruitments.map { RecruitmentResponse.from(it) },
         )
     }
@@ -186,19 +186,17 @@ class PostService(
 
         val memberCount = memberRepository.countByTeamId(team.id)
 
-        val isTeamMember =
-            user?.let { memberRepository.existsByUserIdAndTeamId(it.id, post.teamId) } ?: false
-        val appliedPositionSet =
-            user?.let {
-                applicationRepository.findPositionsByPostIdAndUserId(postId, it.id).toSet()
-            } ?: emptySet()
+        val memberRole =
+            user?.let { memberRepository.findByUserIdAndTeamId(it.id, post.teamId)?.role }
+        val applicationStatus =
+            user?.let { applicationRepository.findByPostIdAndUserId(postId, it.id)?.status }
 
         return PostDetailResponse.of(
             post,
             UserSimpleResponse.from(author),
-            TeamResponse.of(team, memberCount, isTeamMember),
+            TeamResponse.of(team, memberCount, memberRole),
             recruitments,
-            appliedPositionSet,
+            applicationStatus,
         )
     }
 
@@ -279,6 +277,13 @@ class PostService(
         post.checkOwnership(user.id)
         post.update(title, content, teamId)
 
+        val member =
+            memberRepository.findByUserIdAndTeamId(user.id, teamId)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Member not found: ${user.id}, $teamId",
+                )
+
         val existingRecruitmentByPosition = recruitmentRepository.findByPostId(postId).associateBy { it.position }
         val requestedRecruitmentByPosition = recruitments.associateBy { it.position }
 
@@ -324,7 +329,7 @@ class PostService(
         return PostDetailResponse.of(
             post,
             UserSimpleResponse.from(user),
-            TeamResponse.of(team, memberCount, isMember = true),
+            TeamResponse.of(team, memberCount, member.role),
             savedRecruitments.map { RecruitmentResponse.from(it) },
         )
     }
