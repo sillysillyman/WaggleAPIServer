@@ -106,6 +106,6 @@ class MemberReviewService(
             memberReviewRepository.countByRevieweeIdAndType(revieweeUser.id, ReviewType.DISLIKE)
         revieweeUser.temperature = temperatureCalculator.calculate(likeCount, dislikeCount)
 
-        return MemberReviewResponse.of(review, revieweeUser.username!!)
+        return MemberReviewResponse.of(review, revieweeUser)
     }
 }

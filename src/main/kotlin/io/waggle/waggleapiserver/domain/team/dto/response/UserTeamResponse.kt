@@ -1,7 +1,6 @@
 package io.waggle.waggleapiserver.domain.team.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import io.waggle.waggleapiserver.domain.member.Member
 import io.waggle.waggleapiserver.domain.member.MemberRole
@@ -14,7 +13,7 @@ import java.time.Instant
 @Schema(description = "사용자 참여 팀 응답 DTO")
 data class UserTeamResponse(
     @Schema(description = "팀 ID", example = "1")
-    val teamId: Long,
+    val id: Long,
     @Schema(description = "팀명", example = "Waggle")
     val name: String,
     @Schema(description = "팀 설명")
@@ -35,7 +34,6 @@ data class UserTeamResponse(
     @Schema(description = "팀 내 본인 역할", example = "LEADER")
     val role: MemberRole,
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("isVisible")
     @Schema(description = "프로필 공개 여부 (본인 조회 시에만)")
     val visible: Boolean? = null,
     @Schema(description = "팀 생성일시", example = "2025-11-16T12:30:45.123456Z")
@@ -50,7 +48,7 @@ data class UserTeamResponse(
             member: Member,
             visible: Boolean? = null,
         ) = UserTeamResponse(
-            teamId = team.id,
+            id = team.id,
             name = team.name,
             description = team.description,
             status = team.status,

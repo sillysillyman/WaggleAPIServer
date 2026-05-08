@@ -2,18 +2,10 @@ package io.waggle.waggleapiserver.domain.application.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.waggle.waggleapiserver.common.validation.constraint.WebUrl
-import io.waggle.waggleapiserver.domain.user.enums.Position
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
-@Schema(description = "팀 지원 요청 DTO")
-data class ApplicationCreateRequest(
-    @Schema(description = "모집글 ID", example = "1")
-    @field:NotNull
-    val postId: Long,
-    @Schema(description = "지원 직무")
-    @field:NotNull
-    val position: Position,
+@Schema(description = "팀 지원 수정 요청 DTO")
+data class ApplicationUpdateRequest(
     @Schema(description = "팀 지원 동기")
     @field:Size(max = 1000)
     val detail: String? = null,

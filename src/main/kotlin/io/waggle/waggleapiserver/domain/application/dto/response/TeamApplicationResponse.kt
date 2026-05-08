@@ -11,7 +11,7 @@ import java.util.UUID
 @Schema(description = "팀 지원 응답 DTO")
 data class TeamApplicationResponse(
     @Schema(description = "지원 ID", example = "1")
-    val applicationId: Long,
+    val id: Long,
     @Schema(description = "지원 직무", example = "BACKEND")
     val position: Position,
     @Schema(description = "지원 상태", example = "APPROVED")
@@ -23,7 +23,7 @@ data class TeamApplicationResponse(
     @Schema(description = "지원자 정보")
     val user: ApplicantResponse,
     @Schema(description = "읽음 여부", example = "true")
-    val isRead: Boolean,
+    val read: Boolean,
     @Schema(description = "지원 동기")
     val detail: String?,
     @Schema(
@@ -39,7 +39,7 @@ data class TeamApplicationResponse(
     @Schema(description = "지원자 정보")
     data class ApplicantResponse(
         @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
-        val userId: UUID,
+        val id: UUID,
         @Schema(description = "사용자명", example = "testUser")
         val username: String,
         @Schema(description = "협업 온도", example = "36.5")
@@ -53,7 +53,7 @@ data class TeamApplicationResponse(
         companion object {
             fun from(user: User): ApplicantResponse =
                 ApplicantResponse(
-                    userId = user.id,
+                    id = user.id,
                     username = user.username!!,
                     temperature = user.temperature,
                     profileImageUrl = user.profileImageUrl,
@@ -65,16 +65,16 @@ data class TeamApplicationResponse(
         fun of(
             application: Application,
             user: User,
-            isRead: Boolean,
+            read: Boolean,
         ): TeamApplicationResponse =
             TeamApplicationResponse(
-                applicationId = application.id,
+                id = application.id,
                 position = application.position,
                 status = application.status,
                 teamId = application.teamId,
                 postId = application.postId,
                 user = ApplicantResponse.from(user),
-                isRead = isRead,
+                read = read,
                 detail = application.detail,
                 portfolioUrls = application.portfolioUrls.toList(),
                 createdAt = application.createdAt,

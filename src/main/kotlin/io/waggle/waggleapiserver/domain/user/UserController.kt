@@ -10,12 +10,10 @@ import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncomple
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
-import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
-import io.waggle.waggleapiserver.domain.application.service.ApplicationService
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.bookmark.service.BookmarkService
-import io.waggle.waggleapiserver.domain.follow.dto.response.FollowCountResponse
+import io.waggle.waggleapiserver.domain.follow.dto.response.FollowCountsResponse
 import io.waggle.waggleapiserver.domain.follow.service.FollowService
 import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
 import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
@@ -48,7 +46,6 @@ import java.util.UUID
 @RequestMapping("/users")
 @RestController
 class UserController(
-    private val applicationService: ApplicationService,
     private val bookmarkService: BookmarkService,
     private val followService: FollowService,
     private val userService: UserService,
@@ -81,9 +78,9 @@ class UserController(
 
     @Operation(summary = "사용자 팔로우 개수 정보 조회")
     @GetMapping("/{userId}/follow-count")
-    fun getUserFollowCount(
+    fun getUserFollowCounts(
         @PathVariable userId: UUID,
-    ): FollowCountResponse = followService.getUserFollowCount(userId)
+    ): FollowCountsResponse = followService.getUserFollowCounts(userId)
 
     @Operation(summary = "사용자 참여 팀 목록 조회")
     @GetMapping("/{userId}/teams")
@@ -96,12 +93,6 @@ class UserController(
     fun getMyProfile(
         @CurrentUser user: User,
     ): UserProfileResponse = userService.getUserProfile(user)
-
-    @Operation(summary = "본인 지원 목록 조회")
-    @GetMapping("/me/applications")
-    fun getMyApplications(
-        @CurrentUser user: User,
-    ): List<ApplicationResponse> = applicationService.getUserApplications(user)
 
     @Operation(
         summary = "본인 북마크 목록 조회",

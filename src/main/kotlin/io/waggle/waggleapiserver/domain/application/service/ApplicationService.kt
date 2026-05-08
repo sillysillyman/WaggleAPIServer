@@ -8,8 +8,11 @@ import io.waggle.waggleapiserver.domain.application.Application
 import io.waggle.waggleapiserver.domain.application.ApplicationRead
 import io.waggle.waggleapiserver.domain.application.ApplicationStatus
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
+import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationUpdateRequest
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
 import io.waggle.waggleapiserver.domain.application.dto.response.TeamApplicationResponse
+import io.waggle.waggleapiserver.domain.application.dto.response.UserApplicationCountsResponse
+import io.waggle.waggleapiserver.domain.application.dto.response.UserApplicationResponse
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationReadRepository
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
 import io.waggle.waggleapiserver.domain.member.Member
@@ -21,6 +24,7 @@ import io.waggle.waggleapiserver.domain.notification.event.MemberJoinedEvent
 import io.waggle.waggleapiserver.domain.notification.event.TeamJoinedEvent
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentRepository
+import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -38,6 +42,7 @@ class ApplicationService(
     private val memberRepository: MemberRepository,
     private val postRepository: PostRepository,
     private val recruitmentRepository: RecruitmentRepository,
+    private val teamRepository: TeamRepository,
     private val userRepository: UserRepository,
 ) {
     @Transactional
@@ -77,15 +82,10 @@ class ApplicationService(
             throw BusinessException(ErrorCode.INVALID_STATE, "$position is no longer recruiting")
         }
 
-        if (applicationRepository.existsByPostIdAndUserIdAndPosition(
-                postId,
-                user.id,
-                position,
-            )
-        ) {
+        if (applicationRepository.existsByPostIdAndUserId(postId, user.id)) {
             throw BusinessException(
                 ErrorCode.DUPLICATE_RESOURCE,
-                "Already applied to post: $postId, position: $position",
+                "Already applied to post: $postId",
             )
         }
 
@@ -109,7 +109,7 @@ class ApplicationService(
             ),
         )
 
-        return ApplicationResponse.of(savedApplication)
+        return ApplicationResponse.from(savedApplication)
     }
 
     @Transactional
@@ -145,12 +145,69 @@ class ApplicationService(
                     "User not found: ${application.userId}",
                 )
 
-        return TeamApplicationResponse.of(application, applicant, isRead = true)
+        return TeamApplicationResponse.of(application, applicant, read = true)
     }
 
-    fun getUserApplications(user: User): List<ApplicationResponse> {
-        val applications = applicationRepository.findByUserId(user.id)
-        return applications.map { ApplicationResponse.of(it) }
+    fun getUserApplications(
+        status: ApplicationStatus?,
+        cursorQuery: CursorGetQuery,
+        user: User,
+    ): CursorResponse<UserApplicationResponse> {
+        val pageable = PageRequest.of(0, cursorQuery.size + 1)
+        val applications =
+            applicationRepository.findByUserIdWithCursor(
+                userId = user.id,
+                status = status,
+                cursor = cursorQuery.cursor,
+                pageable = pageable,
+            )
+
+        val hasNext = applications.size > cursorQuery.size
+        val slicedApplications = if (hasNext) applications.take(cursorQuery.size) else applications
+
+        val teamIds = slicedApplications.map { it.teamId }.distinct()
+        val postIds = slicedApplications.map { it.postId }.distinct()
+        val teamById = teamRepository.findAllById(teamIds).associateBy { it.id }
+        val postById = postRepository.findAllById(postIds).associateBy { it.id }
+
+        val data =
+            slicedApplications.map { application ->
+                val team =
+                    teamById[application.teamId]
+                        ?: throw BusinessException(
+                            ErrorCode.ENTITY_NOT_FOUND,
+                            "Team not found: ${application.teamId}",
+                        )
+                val post =
+                    postById[application.postId]
+                        ?: throw BusinessException(
+                            ErrorCode.ENTITY_NOT_FOUND,
+                            "Post not found: ${application.postId}",
+                        )
+                UserApplicationResponse.of(application, team, post)
+            }
+
+        return CursorResponse(
+            data = data,
+            nextCursor = if (hasNext) slicedApplications.lastOrNull()?.id else null,
+            hasNext = hasNext,
+        )
+    }
+
+    fun getUserApplicationCounts(user: User): UserApplicationCountsResponse {
+        val countByStatus =
+            applicationRepository
+                .countByUserIdGroupByStatus(user.id)
+                .associate { it.status to it.count }
+        val pending = countByStatus[ApplicationStatus.PENDING] ?: 0L
+        val approved = countByStatus[ApplicationStatus.APPROVED] ?: 0L
+        val rejected = countByStatus[ApplicationStatus.REJECTED] ?: 0L
+        return UserApplicationCountsResponse(
+            total = pending + approved + rejected,
+            pending = pending,
+            approved = approved,
+            rejected = rejected,
+        )
     }
 
     fun getTeamApplications(
@@ -224,7 +281,7 @@ class ApplicationService(
                 TeamApplicationResponse.of(
                     application,
                     applicant,
-                    isRead = readApplicationIdSet.contains(application.id),
+                    read = readApplicationIdSet.contains(application.id),
                 )
             }
 
@@ -254,6 +311,26 @@ class ApplicationService(
     }
 
     @Transactional
+    fun updateApplication(
+        applicationId: Long,
+        request: ApplicationUpdateRequest,
+        user: User,
+    ): ApplicationResponse {
+        val (detail, portfolioUrls) = request
+
+        val application =
+            applicationRepository.findByIdAndUserId(applicationId, user.id)
+                ?: throw BusinessException(
+                    ErrorCode.ENTITY_NOT_FOUND,
+                    "Application not found: $applicationId",
+                )
+
+        application.update(detail, portfolioUrls)
+
+        return ApplicationResponse.from(application)
+    }
+
+    @Transactional
     fun deleteApplication(
         applicationId: Long,
         user: User,
@@ -264,6 +341,14 @@ class ApplicationService(
                     ErrorCode.ENTITY_NOT_FOUND,
                     "Application not found: $applicationId",
                 )
+
+        if (application.status != ApplicationStatus.PENDING) {
+            throw BusinessException(
+                ErrorCode.INVALID_STATE,
+                "Only PENDING applications can be cancelled",
+            )
+        }
+
         application.delete()
     }
 

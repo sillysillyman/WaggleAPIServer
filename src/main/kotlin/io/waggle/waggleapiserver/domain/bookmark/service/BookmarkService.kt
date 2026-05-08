@@ -46,11 +46,11 @@ class BookmarkService(
             )
         return if (bookmarkRepository.existsById(bookmarkId)) {
             bookmarkRepository.deleteById(bookmarkId)
-            BookmarkToggleResponse(isBookmarked = false)
+            BookmarkToggleResponse(bookmarked = false)
         } else {
             val bookmark = Bookmark(bookmarkId)
             bookmarkRepository.save(bookmark)
-            BookmarkToggleResponse(isBookmarked = true)
+            BookmarkToggleResponse(bookmarked = true)
         }
     }
 
@@ -98,13 +98,15 @@ class BookmarkService(
                     memberRepository
                         .countByTeamIds(teamIds)
                         .associate { it.teamId to it.count.toInt() }
-                val memberTeamIdSet =
-                    memberRepository.findMemberTeamIdsByUserIdAndTeamIdIn(user.id, teamIds).toSet()
+                val memberRoleByTeamId =
+                    memberRepository
+                        .findByUserIdAndTeamIdIn(user.id, teamIds)
+                        .associate { it.teamId to it.role }
                 teams.map {
                     TeamResponse.of(
                         it,
                         memberCountByTeamId[it.id] ?: 0,
-                        isMember = it.id in memberTeamIdSet,
+                        memberRoleByTeamId[it.id],
                     )
                 }
             }

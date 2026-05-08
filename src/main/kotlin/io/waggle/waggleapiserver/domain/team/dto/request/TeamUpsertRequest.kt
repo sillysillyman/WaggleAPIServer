@@ -1,6 +1,7 @@
 package io.waggle.waggleapiserver.domain.team.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
+import io.waggle.waggleapiserver.common.validation.constraint.WebUrl
 import io.waggle.waggleapiserver.domain.team.enums.WorkMode
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -17,5 +18,6 @@ data class TeamUpsertRequest(
     @field:NotNull
     val workMode: WorkMode,
     @Schema(description = "팀 프로필 이미지 URL")
+    @field:WebUrl
     val profileImageUrl: String? = null,
 )

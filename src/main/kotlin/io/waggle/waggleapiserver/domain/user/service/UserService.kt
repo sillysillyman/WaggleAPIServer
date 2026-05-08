@@ -85,8 +85,8 @@ class UserService(
     }
 
     fun checkUsername(username: String): UserCheckUsernameResponse {
-        val isAvailable = !userRepository.existsByUsername(username)
-        return UserCheckUsernameResponse(isAvailable)
+        val available = !userRepository.existsByUsername(username)
+        return UserCheckUsernameResponse(available)
     }
 
     fun getUserProfile(userId: UUID): UserProfileResponse {
@@ -139,7 +139,7 @@ class UserService(
     }
 
     fun getUserProfileCompletion(user: User): UserProfileCompletionResponse =
-        UserProfileCompletionResponse(isComplete = user.isProfileComplete())
+        UserProfileCompletionResponse(complete = user.isProfileComplete())
 
     @Transactional
     fun updateTeamVisibility(

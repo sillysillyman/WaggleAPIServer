@@ -13,7 +13,7 @@ import java.util.UUID
 @Schema(description = "알림 응답 DTO")
 data class NotificationResponse(
     @Schema(description = "알림 ID", example = "1")
-    val notificationId: Long,
+    val id: Long,
     @Schema(description = "알림 타입", example = "APPLICATION_RECEIVED")
     val type: NotificationType,
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -27,7 +27,7 @@ data class NotificationResponse(
     @Schema(description = "팀 정보")
     data class TeamResponse(
         @Schema(description = "팀 ID", example = "1")
-        val teamId: Long,
+        val id: Long,
         @Schema(description = "팀명", example = "Waggle")
         val name: String,
         @Schema(
@@ -39,7 +39,7 @@ data class NotificationResponse(
         companion object {
             fun from(team: Team) =
                 TeamResponse(
-                    teamId = team.id,
+                    id = team.id,
                     name = team.name,
                     profileImageUrl = team.profileImageUrl,
                 )
@@ -49,14 +49,14 @@ data class NotificationResponse(
     @Schema(description = "모집글 정보")
     data class PostResponse(
         @Schema(description = "모집글 ID", example = "1")
-        val postId: Long,
+        val id: Long,
         @Schema(description = "모집글 제목", example = "백엔드 개발자 모집")
         val title: String,
     ) {
         companion object {
             fun from(post: Post) =
                 PostResponse(
-                    postId = post.id,
+                    id = post.id,
                     title = post.title,
                 )
         }
@@ -65,14 +65,14 @@ data class NotificationResponse(
     @Schema(description = "관련 사용자 정보")
     data class TriggeredByResponse(
         @Schema(description = "사용자 ID")
-        val userId: UUID,
+        val id: UUID,
         @Schema(description = "사용자명")
         val username: String?,
     ) {
         companion object {
-            fun of(user: User) =
+            fun from(user: User) =
                 TriggeredByResponse(
-                    userId = user.id,
+                    id = user.id,
                     username = user.username,
                 )
         }
@@ -84,7 +84,7 @@ data class NotificationResponse(
             metadata: Map<String, Any?>?,
         ): NotificationResponse =
             NotificationResponse(
-                notificationId = notification.id,
+                id = notification.id,
                 type = notification.type,
                 metadata = metadata,
                 readAt = notification.readAt,

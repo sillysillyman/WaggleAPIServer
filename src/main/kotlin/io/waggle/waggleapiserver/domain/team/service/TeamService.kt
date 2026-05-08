@@ -80,7 +80,7 @@ class TeamService(
 
         val memberCount = memberRepository.countByTeamId(savedTeam.id)
 
-        return TeamResponse.of(savedTeam, memberCount, isMember = true)
+        return TeamResponse.of(savedTeam, memberCount, member.role)
     }
 
     fun generateProfileImagePresignedUrl(request: PresignedUrlRequest): PresignedUrlResponse {
@@ -103,10 +103,10 @@ class TeamService(
                     "Team not found: $teamId",
                 )
         val memberCount = memberRepository.countByTeamId(teamId)
-        val isMember =
-            user?.let { memberRepository.existsByUserIdAndTeamId(it.id, teamId) } ?: false
+        val memberRole =
+            user?.let { memberRepository.findByUserIdAndTeamId(it.id, teamId)?.role }
 
-        return TeamResponse.of(team, memberCount, isMember)
+        return TeamResponse.of(team, memberCount, memberRole)
     }
 
     fun getTeamMembers(
@@ -192,7 +192,7 @@ class TeamService(
 
         val memberCount = memberRepository.countByTeamId(teamId)
 
-        return TeamResponse.of(team, memberCount, isMember = true)
+        return TeamResponse.of(team, memberCount, member.role)
     }
 
     @Transactional

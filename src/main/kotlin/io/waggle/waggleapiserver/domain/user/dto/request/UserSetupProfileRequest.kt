@@ -1,12 +1,12 @@
 package io.waggle.waggleapiserver.domain.user.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
+import io.waggle.waggleapiserver.common.validation.constraint.WebUrl
 import io.waggle.waggleapiserver.domain.user.enums.Position
 import io.waggle.waggleapiserver.domain.user.enums.Skill
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
-import org.hibernate.validator.constraints.URL
 
 @Schema(description = "사용자 프로필 초기 설정 요청 DTO")
 data class UserSetupProfileRequest(
@@ -20,6 +20,7 @@ data class UserSetupProfileRequest(
     @field:Size(max = 1000)
     val bio: String? = null,
     @Schema(description = "프로필 이미지 URL")
+    @field:WebUrl
     val profileImageUrl: String? = null,
     @Schema(description = "기술 스택", example = "[\"KOTLIN\", \"SPRING\"]")
     @field:NotNull
@@ -29,5 +30,5 @@ data class UserSetupProfileRequest(
         example = "[\"https://github.com/user\", \"https://blog.example.com\"]",
         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
     )
-    val portfolioUrls: List<@URL String> = emptyList(),
+    val portfolioUrls: List<@WebUrl String> = emptyList(),
 )

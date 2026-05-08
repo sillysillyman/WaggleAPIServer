@@ -8,7 +8,7 @@ import java.util.UUID
 @Schema(description = "대화 상대 정보")
 data class ConversationPartnerResponse(
     @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
-    val userId: UUID,
+    val id: UUID,
     @Schema(description = "사용자명", example = "testUser")
     val username: String?,
     @Schema(description = "직무", example = "BACKEND")
@@ -19,7 +19,7 @@ data class ConversationPartnerResponse(
     companion object {
         fun from(user: User): ConversationPartnerResponse =
             ConversationPartnerResponse(
-                userId = user.id,
+                id = user.id,
                 username = user.username,
                 position = user.position,
                 profileImageUrl = user.profileImageUrl,

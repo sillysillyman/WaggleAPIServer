@@ -10,7 +10,7 @@ import java.time.Instant
 @Schema(description = "모집 정보 응답 DTO")
 class RecruitmentResponse(
     @Schema(description = "모집 ID", example = "1")
-    val recruitmentId: Long,
+    val id: Long,
     @Schema(description = "모집 직무", example = "BACKEND")
     val position: Position,
     @Schema(description = "모집 인원 수", example = "3")
@@ -27,7 +27,7 @@ class RecruitmentResponse(
     companion object {
         fun from(recruitment: Recruitment): RecruitmentResponse =
             RecruitmentResponse(
-                recruitmentId = recruitment.id,
+                id = recruitment.id,
                 position = recruitment.position,
                 count = recruitment.count,
                 status = recruitment.status,

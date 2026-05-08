@@ -10,7 +10,7 @@ import java.util.UUID
 @Schema(description = "사용자 응답 DTO")
 data class UserSimpleResponse(
     @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
-    val userId: UUID,
+    val id: UUID,
     @Schema(description = "사용자명", example = "testUser")
     val username: String,
     @Schema(description = "협업 온도", example = "36.5")
@@ -32,7 +32,7 @@ data class UserSimpleResponse(
     companion object {
         fun from(user: User): UserSimpleResponse =
             UserSimpleResponse(
-                userId = user.id,
+                id = user.id,
                 username = user.username!!,
                 temperature = user.temperature,
                 profileImageUrl = user.profileImageUrl,

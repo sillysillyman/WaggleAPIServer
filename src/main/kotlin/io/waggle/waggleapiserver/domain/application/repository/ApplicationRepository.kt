@@ -2,7 +2,6 @@ package io.waggle.waggleapiserver.domain.application.repository
 
 import io.waggle.waggleapiserver.domain.application.Application
 import io.waggle.waggleapiserver.domain.application.ApplicationStatus
-import io.waggle.waggleapiserver.domain.user.enums.Position
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -11,17 +10,15 @@ import java.time.Instant
 import java.util.UUID
 
 interface ApplicationRepository : JpaRepository<Application, Long> {
-    fun existsByPostIdAndUserIdAndPosition(
+    fun existsByPostIdAndUserId(
         postId: Long,
         userId: UUID,
-        position: Position,
     ): Boolean
 
-    @Query("SELECT a.position FROM Application a WHERE a.postId = :postId AND a.userId = :userId")
-    fun findPositionsByPostIdAndUserId(
+    fun findByPostIdAndUserId(
         postId: Long,
         userId: UUID,
-    ): List<Position>
+    ): Application?
 
     fun findByIdAndUserId(
         id: Long,
@@ -29,6 +26,31 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
     ): Application?
 
     fun findByUserId(userId: UUID): List<Application>
+
+    @Query(
+        """
+        SELECT a FROM Application a
+        WHERE a.userId = :userId
+        AND (:status IS NULL OR a.status = :status)
+        AND (:cursor IS NULL OR a.id < :cursor)
+        ORDER BY a.id DESC
+        """,
+    )
+    fun findByUserIdWithCursor(
+        userId: UUID,
+        status: ApplicationStatus?,
+        cursor: Long?,
+        pageable: Pageable,
+    ): List<Application>
+
+    @Query(
+        """
+        SELECT a.status AS status, COUNT(a) AS count
+        FROM Application a WHERE a.userId = :userId
+        GROUP BY a.status
+        """,
+    )
+    fun countByUserIdGroupByStatus(userId: UUID): List<UserApplicationStatusCount>
 
     fun findByStatusAndCreatedAtBetween(
         status: ApplicationStatus,
@@ -157,4 +179,9 @@ interface PostApplicantCount {
 interface PostUnreadCount {
     val postId: Long
     val unreadCount: Long
+}
+
+interface UserApplicationStatusCount {
+    val status: ApplicationStatus
+    val count: Long
 }

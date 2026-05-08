@@ -4,7 +4,7 @@ import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.domain.follow.Follow
 import io.waggle.waggleapiserver.domain.follow.dto.request.FollowToggleRequest
-import io.waggle.waggleapiserver.domain.follow.dto.response.FollowCountResponse
+import io.waggle.waggleapiserver.domain.follow.dto.response.FollowCountsResponse
 import io.waggle.waggleapiserver.domain.follow.dto.response.FollowToggleResponse
 import io.waggle.waggleapiserver.domain.follow.repository.FollowRepository
 import io.waggle.waggleapiserver.domain.user.User
@@ -46,17 +46,17 @@ class FollowService(
                         followeeId = followeeId,
                     ),
                 )
-                FollowToggleResponse(isFollowing = true)
+                FollowToggleResponse(following = true)
             }
 
             existingFollow.deletedAt == null -> {
                 followRepository.deleteByFollowerIdAndFolloweeId(followerId, followeeId)
-                FollowToggleResponse(isFollowing = false)
+                FollowToggleResponse(following = false)
             }
 
             else -> {
                 existingFollow.reactivate()
-                FollowToggleResponse(isFollowing = true)
+                FollowToggleResponse(following = true)
             }
         }
     }
@@ -95,9 +95,9 @@ class FollowService(
         }
     }
 
-    fun getUserFollowCount(userId: UUID): FollowCountResponse =
-        FollowCountResponse(
-            followedCount = followRepository.countByFolloweeId(userId).toInt(),
-            followingCount = followRepository.countByFollowerId(userId).toInt(),
+    fun getUserFollowCounts(userId: UUID): FollowCountsResponse =
+        FollowCountsResponse(
+            followed = followRepository.countByFolloweeId(userId).toInt(),
+            following = followRepository.countByFollowerId(userId).toInt(),
         )
 }

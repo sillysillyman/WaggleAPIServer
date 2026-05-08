@@ -27,7 +27,7 @@ import java.util.UUID
         Index(name = "idx_applications_post", columnList = "post_id"),
         Index(name = "idx_applications_team_priority_id", columnList = "team_id, status_priority, id DESC"),
         Index(name = "idx_applications_post_priority_id", columnList = "post_id, status_priority, id DESC"),
-        Index(name = "idx_applications_post_user_position", columnList = "post_id, user_id, position"),
+        Index(name = "idx_applications_post_user", columnList = "post_id, user_id"),
     ],
 )
 class Application(
@@ -61,5 +61,17 @@ class Application(
             throw BusinessException(ErrorCode.INVALID_STATE, "status is not PENDING")
         }
         this.status = status
+    }
+
+    fun update(
+        detail: String?,
+        portfolioUrls: List<String>,
+    ) {
+        if (this.status != ApplicationStatus.PENDING) {
+            throw BusinessException(ErrorCode.INVALID_STATE, "status is not PENDING")
+        }
+        this.detail = detail
+        this.portfolioUrls.clear()
+        this.portfolioUrls.addAll(portfolioUrls)
     }
 }

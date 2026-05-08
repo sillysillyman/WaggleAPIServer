@@ -13,11 +13,10 @@ interface MemberRepository : JpaRepository<Member, Long> {
         teamId: Long,
     ): Boolean
 
-    @Query("SELECT m.teamId FROM Member m WHERE m.userId = :userId AND m.teamId IN :teamIds")
-    fun findMemberTeamIdsByUserIdAndTeamIdIn(
+    fun findByUserIdAndTeamIdIn(
         userId: UUID,
         teamIds: List<Long>,
-    ): List<Long>
+    ): List<Member>
 
     fun countByTeamId(teamId: Long): Int
 

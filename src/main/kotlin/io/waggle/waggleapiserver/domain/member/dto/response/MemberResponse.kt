@@ -12,7 +12,7 @@ import java.util.UUID
 @Schema(description = "멤버 응답 DTO")
 data class MemberResponse(
     @Schema(description = "멤버 ID", example = "1")
-    val memberId: Long,
+    val id: Long,
     @Schema(description = "팀 ID", example = "1")
     val teamId: Long,
     @Schema(description = "멤버 사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
@@ -43,7 +43,7 @@ data class MemberResponse(
             user: User,
         ): MemberResponse =
             MemberResponse(
-                memberId = member.id,
+                id = member.id,
                 teamId = member.teamId,
                 userId = member.userId,
                 username = user.username!!,

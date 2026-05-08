@@ -8,7 +8,7 @@ import java.time.Instant
 @Schema(description = "메시지 응답 DTO")
 data class MessageResponse(
     @Schema(description = "메시지 ID", example = "1")
-    val messageId: Long,
+    val id: Long,
     @Schema(description = "발신자 정보")
     val sender: MessagePartnerResponse,
     @Schema(description = "수신자 정보")
@@ -27,7 +27,7 @@ data class MessageResponse(
             receiver: User,
         ): MessageResponse =
             MessageResponse(
-                messageId = message.id,
+                id = message.id,
                 sender = MessagePartnerResponse.from(sender),
                 receiver = MessagePartnerResponse.from(receiver),
                 content = message.content,
