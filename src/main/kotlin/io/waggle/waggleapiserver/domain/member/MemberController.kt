@@ -43,7 +43,7 @@ class MemberController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun updateMemberRole(
         @PathVariable memberId: Long,
-        @RequestBody request: MemberUpdateRoleRequest,
+        @Valid @RequestBody request: MemberUpdateRoleRequest,
         @CurrentUser user: User,
     ) = memberService.updateMemberRole(memberId, request, user)
 

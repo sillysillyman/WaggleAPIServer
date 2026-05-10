@@ -41,7 +41,7 @@ class ApplicationController(
     @GetMapping
     fun getMyApplications(
         @RequestParam(required = false) status: ApplicationStatus?,
-        @ParameterObject cursorQuery: CursorGetQuery,
+        @Valid @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
     ): CursorResponse<UserApplicationResponse> = applicationService.getUserApplications(status, cursorQuery, user)
 

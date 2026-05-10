@@ -8,6 +8,7 @@ import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.message.dto.response.MessageResponse
 import io.waggle.waggleapiserver.domain.message.service.MessageService
 import io.waggle.waggleapiserver.domain.user.User
+import jakarta.validation.Valid
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -25,7 +26,7 @@ class MessageController(
     @GetMapping("/{partnerId}")
     fun getMessageHistory(
         @PathVariable partnerId: UUID,
-        @ParameterObject cursorQuery: CursorGetQuery,
+        @Valid @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
     ): CursorResponse<MessageResponse> = messageService.getMessageHistory(partnerId, cursorQuery, user)
 }

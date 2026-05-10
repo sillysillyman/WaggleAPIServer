@@ -97,7 +97,7 @@ class TeamController(
     fun getTeamApplications(
         @PathVariable teamId: Long,
         @RequestParam(required = false) postId: Long?,
-        @ParameterObject cursorQuery: CursorGetQuery,
+        @Valid @ParameterObject cursorQuery: CursorGetQuery,
         @CurrentUser user: User,
     ): CursorResponse<TeamApplicationResponse> =
         applicationService.getTeamApplications(teamId, postId, cursorQuery, user)

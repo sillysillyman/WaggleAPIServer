@@ -56,8 +56,8 @@ class PostController(
     @Operation(summary = "모집글 목록 커서 페이지네이션 조회")
     @GetMapping
     fun getPosts(
-        @ParameterObject query: PostGetQuery,
-        @ParameterObject cursorQuery: CursorGetQuery,
+        @Valid @ParameterObject query: PostGetQuery,
+        @Valid @ParameterObject cursorQuery: CursorGetQuery,
     ): CursorResponse<PostSimpleResponse> = postService.getPosts(query, cursorQuery)
 
     @AllowIncompleteProfile
