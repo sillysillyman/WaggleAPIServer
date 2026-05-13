@@ -20,6 +20,13 @@ data class UserApplicationResponse(
     val team: TeamResponse,
     @Schema(description = "지원 모집글 정보")
     val post: PostResponse,
+    @Schema(description = "지원 동기")
+    val detail: String?,
+    @Schema(
+        description = "포트폴리오 URL 목록",
+        example = "[\"https://github.com/user\", \"https://blog.example.com\"]",
+    )
+    val portfolioUrls: List<String>,
     @Schema(description = "지원일시", example = "2025-11-16T12:30:45.123456Z")
     val createdAt: Instant,
 ) {
@@ -59,6 +66,8 @@ data class UserApplicationResponse(
                 status = application.status,
                 team = TeamResponse.from(team),
                 post = PostResponse.from(post),
+                detail = application.detail,
+                portfolioUrls = application.portfolioUrls.toList(),
                 createdAt = application.createdAt,
             )
     }

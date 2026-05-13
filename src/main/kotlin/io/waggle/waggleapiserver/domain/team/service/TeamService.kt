@@ -49,13 +49,6 @@ class TeamService(
     ): TeamResponse {
         val (name, description, workMode, profileImageUrl) = request
 
-        if (teamRepository.existsByName(name)) {
-            throw BusinessException(
-                ErrorCode.DUPLICATE_RESOURCE,
-                "Already exists team name: $name",
-            )
-        }
-
         val team =
             Team(
                 name = name,
@@ -170,13 +163,6 @@ class TeamService(
 
         if (name != team.name) {
             member.checkMemberRole(MemberRole.LEADER)
-
-            if (teamRepository.existsByName(name)) {
-                throw BusinessException(
-                    ErrorCode.DUPLICATE_RESOURCE,
-                    "Already exists team name: $name",
-                )
-            }
         }
 
         team.profileImageUrl?.takeIf { it != profileImageUrl }?.let {

@@ -29,7 +29,7 @@ import java.util.UUID
 class Team(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     var name: String,
     @Column(nullable = false, columnDefinition = "TEXT")
     var description: String,
@@ -77,14 +77,5 @@ class Team(
         if (!isCompleted) {
             throw BusinessException(ErrorCode.INVALID_STATE, "Team is not completed yet")
         }
-    }
-
-    override fun delete() {
-        this.name = "__deleted_${UUID.randomUUID()}_$name".take(NAME_MAX_LENGTH)
-        super.delete()
-    }
-
-    companion object {
-        private const val NAME_MAX_LENGTH = 255
     }
 }
