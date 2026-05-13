@@ -49,21 +49,32 @@ class DiscordWebhookClient(
             appendLine("**예외**: `${context.exceptionClass}`")
             appendLine("**메시지**: ${context.message}")
             appendLine()
-            appendLine(
-                "**요청**: `${context.httpMethod} ${
-                    context.queryString?.let { "${context.requestUri}?$it" } ?: context.requestUri
-                }`",
-            )
-            appendLine()
-            appendLine("**Headers**")
-            context.host?.let { appendLine("- Host: `$it`") }
-            context.userAgent?.let { appendLine("- User-Agent: `$it`") }
-            context.referer?.let { appendLine("- Referer: `$it`") }
-            context.forwardedFor?.let { appendLine("- X-Forwarded-For: `$it`") }
+            when (context) {
+                is DiscordErrorContext.Http -> appendHttpDetails(context)
+                is DiscordErrorContext.Async -> appendAsyncDetails(context)
+            }
             appendLine()
             appendLine("**Stack Trace**")
             appendLine("```")
             appendLine(context.stackTrace)
             appendLine("```")
         }
+
+    private fun StringBuilder.appendHttpDetails(context: DiscordErrorContext.Http) {
+        appendLine(
+            "**요청**: `${context.httpMethod} ${
+                context.queryString?.let { "${context.requestUri}?$it" } ?: context.requestUri
+            }`",
+        )
+        appendLine()
+        appendLine("**Headers**")
+        context.host?.let { appendLine("- Host: `$it`") }
+        context.userAgent?.let { appendLine("- User-Agent: `$it`") }
+        context.referer?.let { appendLine("- Referer: `$it`") }
+        context.forwardedFor?.let { appendLine("- X-Forwarded-For: `$it`") }
+    }
+
+    private fun StringBuilder.appendAsyncDetails(context: DiscordErrorContext.Async) {
+        appendLine("**Source**: `${context.source}`")
+    }
 }

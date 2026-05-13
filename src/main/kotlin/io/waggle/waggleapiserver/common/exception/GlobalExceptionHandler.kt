@@ -63,7 +63,7 @@ class GlobalExceptionHandler(
         request: HttpServletRequest,
     ): ResponseEntity<ErrorResponse> {
         logger.error("Unexpected exception occurred", e)
-        discordWebhookClient?.send(DiscordErrorContext.from(request, e))
+        discordWebhookClient?.send(DiscordErrorContext.fromHttp(request, e))
         val errorResponse =
             ErrorResponse(
                 status = ErrorCode.INTERNAL_SERVER_ERROR.status.value(),
