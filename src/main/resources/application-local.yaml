@@ -1,9 +1,6 @@
 app:
   cors:
-    allowed-origins:
-      - http://localhost:3000
-      - http://localhost:5173
-      - https://waggle.lol
+    allowed-origins: http://localhost:3000,http://localhost:5173,https://waggle.lol
 
 logging:
   level:
