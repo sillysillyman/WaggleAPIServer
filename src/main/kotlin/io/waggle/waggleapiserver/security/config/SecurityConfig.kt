@@ -5,6 +5,7 @@ import io.waggle.waggleapiserver.security.jwt.JwtAuthenticationFilter
 import io.waggle.waggleapiserver.security.oauth2.CustomOAuth2UserService
 import io.waggle.waggleapiserver.security.oauth2.OAuth2LoginFailureHandler
 import io.waggle.waggleapiserver.security.oauth2.OAuth2LoginSuccessHandler
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
@@ -27,6 +28,7 @@ class SecurityConfig(
     private val customOAuth2UserService: CustomOAuth2UserService,
     private val oAuth2LoginSuccessHandler: OAuth2LoginSuccessHandler,
     private val oAuth2LoginFailureHandler: OAuth2LoginFailureHandler,
+    @Value("\${app.cors.allowed-origins}") private val allowedOrigins: List<String>,
 ) {
     private val isLocal: Boolean
         get() = environment.activeProfiles.contains("local")
@@ -49,6 +51,7 @@ class SecurityConfig(
                         "/v3/api-docs/**",
                         "/oauth2/**",
                         "/login/oauth2/**",
+                        "/auth/oauth/redeem",
                         "/auth/refresh",
                         "/ws",
                         "/ws-sockjs/**",
@@ -82,7 +85,7 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://localhost:3000", "http://localhost:5173", "https://waggle.lol")
+        configuration.allowedOrigins = allowedOrigins
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.allowCredentials = true

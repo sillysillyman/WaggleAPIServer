@@ -32,6 +32,20 @@ class CustomOAuth2UserService(
                 )
             }
 
+        val email = userInfo.email
+        if (email.isNullOrBlank()) {
+            throw BusinessException(
+                ErrorCode.OAUTH_EMAIL_MISSING,
+                "Email not provided by ${userInfo.provider}",
+            )
+        }
+        if (!userInfo.isEmailVerified) {
+            throw BusinessException(
+                ErrorCode.OAUTH_EMAIL_NOT_VERIFIED,
+                "Email not verified by ${userInfo.provider}",
+            )
+        }
+
         val user =
             userRepository.findByProviderAndProviderId(
                 userInfo.provider,
@@ -49,17 +63,17 @@ class CustomOAuth2UserService(
                     )
                     userRepository.save(deletedUser)
                 } else {
-                    if (userRepository.existsByEmail(userInfo.email)) {
+                    if (userRepository.existsByEmail(email)) {
                         throw BusinessException(
                             ErrorCode.DUPLICATE_RESOURCE,
-                            "Already existing email: ${userInfo.email}",
+                            "Already existing email: $email",
                         )
                     }
                     userRepository.save(
                         User(
                             provider = userInfo.provider,
                             providerId = userInfo.providerId,
-                            email = userInfo.email,
+                            email = email,
                             profileImageUrl = userInfo.profileImageUrl,
                         ),
                     )

@@ -3,6 +3,10 @@ app:
     domain: ${COOKIE_DOMAIN}
     same-site: ${COOKIE_SAME_SITE:Lax}
     secure: ${COOKIE_SECURE:false}
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:5173
   oauth2:
     redirect-uri: ${OAUTH2_REDIRECT_URI}
   temperature:

@@ -27,12 +27,12 @@ class OAuth2LoginSuccessHandler(
         val userId = UUID.fromString(oauth2User.getAttribute<String>("userId")!!)
         val role = UserRole.valueOf(oauth2User.getAttribute<String>("role")!!)
 
-        val accessToken = authService.issueTokens(userId, role, response)
+        val ott = authService.issueOttForOAuth(userId, role, response)
 
         val targetUrl =
             UriComponentsBuilder
                 .fromUriString(redirectUri)
-                .queryParam("accessToken", accessToken)
+                .queryParam("ott", ott)
                 .build()
                 .toUriString()
 
