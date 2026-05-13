@@ -14,6 +14,9 @@ enum class ErrorCode(
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid or expired token"),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Authentication required"),
+    OAUTH_EMAIL_NOT_VERIFIED(HttpStatus.UNAUTHORIZED, "OAuth email is not verified"),
+    OAUTH_EMAIL_MISSING(HttpStatus.UNAUTHORIZED, "OAuth email is required but missing"),
+    OAUTH_OTT_INVALID(HttpStatus.UNAUTHORIZED, "Invalid or expired OAuth one-time token"),
 
     // 403 Forbidden
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "Access denied"),

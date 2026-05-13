@@ -21,7 +21,7 @@ class AuthService(
     private val jwtProvider: JwtProvider,
     private val redisTemplate: StringRedisTemplate,
 ) {
-    fun issueTokens(
+    fun issueOttForOAuth(
         userId: UUID,
         role: UserRole,
         response: HttpServletResponse,
@@ -38,10 +38,30 @@ class AuthService(
         val maxAgeSeconds = (refreshTokenTtl / 1000).toInt()
         authCookieManager.addRefreshTokenCookie(response, refreshToken, maxAgeSeconds)
 
-        return accessToken
+        val ott = UUID.randomUUID().toString()
+        redisTemplate.opsForValue().set(
+            "oauth-ott:$ott",
+            accessToken,
+            Duration.ofMinutes(1),
+        )
+
+        return ott
     }
 
-    fun refresh(refreshToken: String): AccessTokenResponse {
+    fun redeemOtt(ott: String): AccessTokenResponse {
+        val accessToken =
+            redisTemplate.opsForValue().getAndDelete("oauth-ott:$ott")
+                ?: throw BusinessException(
+                    ErrorCode.OAUTH_OTT_INVALID,
+                    "Invalid or expired OAuth one-time token",
+                )
+        return AccessTokenResponse(accessToken)
+    }
+
+    fun refresh(
+        refreshToken: String,
+        response: HttpServletResponse,
+    ): AccessTokenResponse {
         if (!jwtProvider.isTokenValid(refreshToken)) {
             throw BusinessException(ErrorCode.INVALID_TOKEN, "Invalid refresh token")
         }
@@ -54,10 +74,23 @@ class AuthService(
                 ?: throw BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token not found")
 
         if (stored != refreshToken) {
-            throw BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token mismatch")
+            // 재사용 탐지 시 강제 로그아웃
+            redisTemplate.delete("refresh-token:$userId")
+            throw BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token reuse detected")
         }
 
-        return AccessTokenResponse(jwtProvider.generateAccessToken(userId, role))
+        val newAccessToken = jwtProvider.generateAccessToken(userId, role)
+        val newRefreshToken = jwtProvider.generateRefreshToken(userId, role)
+
+        redisTemplate.opsForValue().set(
+            "refresh-token:$userId",
+            newRefreshToken,
+            Duration.ofMillis(refreshTokenTtl),
+        )
+        val maxAgeSeconds = (refreshTokenTtl / 1000).toInt()
+        authCookieManager.addRefreshTokenCookie(response, newRefreshToken, maxAgeSeconds)
+
+        return AccessTokenResponse(newAccessToken)
     }
 
     fun logout(

@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.domain.message.dto.request
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Size
 import java.util.UUID
 
 @Schema(description = "메시지 발신 요청 DTO")
@@ -12,5 +13,6 @@ data class MessageSendRequest(
     val receiverId: UUID,
     @Schema(description = "메시지 내용")
     @field:NotBlank
+    @field:Size(max = 2000)
     val content: String,
 )

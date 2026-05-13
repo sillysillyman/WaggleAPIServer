@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.domain.message
 import io.waggle.waggleapiserver.domain.message.dto.request.MessageSendRequest
 import io.waggle.waggleapiserver.domain.message.service.MessageService
 import io.waggle.waggleapiserver.security.oauth2.UserPrincipal
+import jakarta.validation.Valid
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Controller
@@ -15,7 +16,7 @@ class MessageStompController(
 ) {
     @MessageMapping("/send")
     fun send(
-        @Payload request: MessageSendRequest,
+        @Payload @Valid request: MessageSendRequest,
         principal: Principal,
     ) {
         val senderId = (principal as UserPrincipal).userId

@@ -113,7 +113,7 @@ class GlobalExceptionHandler(
             ErrorResponse(
                 status = statusCode.value(),
                 code = code,
-                message = e.message ?: "Request processing failed",
+                message = (statusCode as? HttpStatus)?.reasonPhrase ?: "Request processing failed",
             )
         return ResponseEntity
             .status(statusCode)

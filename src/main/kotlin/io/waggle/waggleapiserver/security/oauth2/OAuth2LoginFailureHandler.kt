@@ -1,5 +1,7 @@
 package io.waggle.waggleapiserver.security.oauth2
 
+import io.waggle.waggleapiserver.common.exception.BusinessException
+import io.waggle.waggleapiserver.common.exception.ErrorCode
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
@@ -17,13 +19,24 @@ class OAuth2LoginFailureHandler(
         response: HttpServletResponse,
         exception: AuthenticationException,
     ) {
+        val errorCode = findBusinessErrorCode(exception)?.name ?: ErrorCode.UNAUTHORIZED.name
+
         val targetUrl =
             UriComponentsBuilder
                 .fromUriString(redirectUri)
-                .queryParam("error", exception.localizedMessage)
+                .queryParam("errorCode", errorCode)
                 .build()
                 .toUriString()
 
         redirectStrategy.sendRedirect(request, response, targetUrl)
+    }
+
+    private fun findBusinessErrorCode(throwable: Throwable?): ErrorCode? {
+        var current = throwable
+        while (current != null) {
+            if (current is BusinessException) return current.errorCode
+            current = current.cause
+        }
+        return null
     }
 }
