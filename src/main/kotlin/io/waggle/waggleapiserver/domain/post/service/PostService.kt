@@ -55,6 +55,16 @@ class PostService(
     ): PostDetailResponse {
         val (teamId, title, content, recruitments) = request
 
+        val team =
+            teamRepository.findByIdOrNull(teamId)
+                ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Team not found: $teamId")
+        if (team.isCompleted) {
+            throw BusinessException(
+                ErrorCode.INVALID_STATE,
+                "Cannot create post for completed team: $teamId",
+            )
+        }
+
         val member =
             memberRepository.findByUserIdAndTeamId(user.id, teamId)
                 ?: throw BusinessException(
@@ -84,9 +94,6 @@ class PostService(
                 },
             )
 
-        val team =
-            teamRepository.findByIdOrNull(teamId)
-                ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "Team not found: $teamId")
         val memberCount = memberRepository.countByTeamId(teamId)
 
         return PostDetailResponse.of(
