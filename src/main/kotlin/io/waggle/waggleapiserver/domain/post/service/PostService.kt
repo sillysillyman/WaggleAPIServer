@@ -61,7 +61,7 @@ class PostService(
                     ErrorCode.ENTITY_NOT_FOUND,
                     "Member not found: ${user.id}, $teamId",
                 )
-        member.checkMemberRole(MemberRole.MEMBER)
+        member.checkMemberRole(MemberRole.MANAGER)
 
         val post =
             Post(
