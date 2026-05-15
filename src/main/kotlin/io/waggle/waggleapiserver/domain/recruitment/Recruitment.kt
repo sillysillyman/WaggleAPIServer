@@ -19,6 +19,8 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -46,6 +48,7 @@ class Recruitment(
     val postId: Long,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "recruitment_skills", joinColumns = [JoinColumn(name = "recruitment_id")])
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Enumerated(EnumType.STRING)
     @Column(name = "skill", nullable = false, columnDefinition = "VARCHAR(30)")
     val skills: MutableSet<Skill> = mutableSetOf(),

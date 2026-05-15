@@ -18,6 +18,8 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import java.util.UUID
 
 @Entity
@@ -52,12 +54,14 @@ class User(
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_skills", joinColumns = [JoinColumn(name = "user_id")])
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Enumerated(EnumType.STRING)
     @Column(name = "skill", nullable = false, columnDefinition = "VARCHAR(50)")
     val skills: MutableSet<Skill> = mutableSetOf()
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_portfolios", joinColumns = [JoinColumn(name = "user_id")])
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Column(name = "portfolio_url", nullable = false, columnDefinition = "VARCHAR(2048)")
     val portfolioUrls: MutableList<String> = mutableListOf()
 

@@ -349,6 +349,7 @@ class ApplicationService(
             )
         }
 
+        applicationReadRepository.updateDeletedAtByApplicationIdAndDeletedAtIsNull(applicationId)
         application.delete()
     }
 
@@ -402,6 +403,12 @@ class ApplicationService(
                 )
         }
 
+        applicationReadRepository
+            .updateDeletedAtByApplicationUserIdAndTeamIdAndApplicationIdNotAndStatusPendingAndDeletedAtIsNull(
+                userId = application.userId,
+                teamId = application.teamId,
+                excludedId = application.id,
+            )
         applicationRepository.updateDeletedAtByUserIdAndTeamIdAndIdNotAndStatusPendingAndDeletedAtIsNull(
             userId = application.userId,
             teamId = application.teamId,

@@ -16,6 +16,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import java.util.UUID
 
 @Entity
@@ -53,6 +55,7 @@ class Application(
 
     @ElementCollection
     @CollectionTable(name = "application_portfolio_urls", joinColumns = [JoinColumn(name = "application_id")])
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Column(name = "portfolio_url", nullable = false, columnDefinition = "VARCHAR(2048)")
     val portfolioUrls: MutableList<String> = mutableListOf()
 

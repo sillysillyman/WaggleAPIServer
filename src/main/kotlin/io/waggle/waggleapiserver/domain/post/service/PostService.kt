@@ -7,11 +7,13 @@ import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.common.storage.StorageClient
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
+import io.waggle.waggleapiserver.domain.application.repository.ApplicationReadRepository
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
+import io.waggle.waggleapiserver.domain.notification.repository.NotificationRepository
 import io.waggle.waggleapiserver.domain.post.Post
 import io.waggle.waggleapiserver.domain.post.PostSort
 import io.waggle.waggleapiserver.domain.post.dto.request.PostCreateRequest
@@ -40,9 +42,11 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class PostService(
     private val storageClient: StorageClient,
+    private val applicationReadRepository: ApplicationReadRepository,
     private val applicationRepository: ApplicationRepository,
     private val bookmarkRepository: BookmarkRepository,
     private val memberRepository: MemberRepository,
+    private val notificationRepository: NotificationRepository,
     private val postRepository: PostRepository,
     private val recruitmentRepository: RecruitmentRepository,
     private val teamRepository: TeamRepository,
@@ -375,8 +379,10 @@ class PostService(
         post.checkOwnership(user.id)
 
         recruitmentRepository.deleteByPostId(postId)
+        applicationReadRepository.updateDeletedAtByApplicationPostIdAndDeletedAtIsNull(postId)
         applicationRepository.updateDeletedAtByPostIdAndDeletedAtIsNull(postId)
         bookmarkRepository.deleteByIdTargetIdAndIdType(postId, BookmarkType.POST)
+        notificationRepository.deleteByMetadataPostId(postId)
 
         post.delete()
     }

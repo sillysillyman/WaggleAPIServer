@@ -155,6 +155,18 @@ interface ApplicationRepository : JpaRepository<Application, Long> {
     @Modifying
     @Query(
         """
+        UPDATE applications a
+        JOIN posts p ON p.id = a.post_id
+        SET a.deleted_at = UTC_TIMESTAMP(6)
+        WHERE p.user_id = :userId AND a.deleted_at IS NULL
+        """,
+        nativeQuery = true,
+    )
+    fun updateDeletedAtByPostUserIdAndDeletedAtIsNull(userId: UUID)
+
+    @Modifying
+    @Query(
+        """
         UPDATE applications SET deleted_at = UTC_TIMESTAMP(6)
         WHERE user_id = :userId
         AND team_id = :teamId

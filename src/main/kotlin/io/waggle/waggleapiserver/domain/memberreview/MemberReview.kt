@@ -17,6 +17,8 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 import java.util.UUID
 
 @Entity
@@ -50,6 +52,7 @@ class MemberReview(
         name = "member_review_tags",
         joinColumns = [JoinColumn(name = "member_review_id")],
     )
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Enumerated(EnumType.STRING)
     @Column(name = "tag", nullable = false, columnDefinition = "VARCHAR(30)")
     val tags: MutableSet<ReviewTag> = mutableSetOf(),
