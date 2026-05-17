@@ -23,7 +23,7 @@ class TermService(
         user: User,
     ) {
         val currentTermByType =
-            termRepository.findLatestActiveOrderByType().associateBy { it.type }
+            termRepository.findLatestActive().associateBy { it.type }
 
         val agreedTypeSet =
             request.agreements
@@ -63,7 +63,8 @@ class TermService(
         val agreedTermIdSet =
             userTermAgreementRepository.findActiveTermIdsByUserId(user.id).toSet()
         return termRepository
-            .findLatestActiveOrderByType()
+            .findLatestActive()
+            .sortedBy { it.type.ordinal }
             .map { TermResponse.of(it, agreed = agreedTermIdSet.contains(it.id)) }
     }
 
@@ -76,7 +77,7 @@ class TermService(
     private fun hasAgreedToAllRequiredTerms(user: User): Boolean {
         val requiredTermIds =
             termRepository
-                .findLatestActiveOrderByType()
+                .findLatestActive()
                 .filter { it.mandatory }
                 .map { it.id }
         if (requiredTermIds.isEmpty()) return true

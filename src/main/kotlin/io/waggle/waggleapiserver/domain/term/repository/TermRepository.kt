@@ -14,8 +14,7 @@ interface TermRepository : JpaRepository<Term, Long> {
             WHERE t2.type = t.type
             AND t2.deprecatedAt IS NULL
         )
-        ORDER BY t.type
         """,
     )
-    fun findLatestActiveOrderByType(): List<Term>
+    fun findLatestActive(): List<Term>
 }
