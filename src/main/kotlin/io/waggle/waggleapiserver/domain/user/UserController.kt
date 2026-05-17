@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteSetup
+import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowMissingTermAgreement
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
@@ -88,6 +89,7 @@ class UserController(
         @PathVariable userId: UUID,
     ): List<UserTeamResponse> = userService.getUserTeams(userId, includeHidden = false)
 
+    @AllowMissingTermAgreement
     @Operation(summary = "본인 프로필 조회")
     @GetMapping("/me")
     fun getMyProfile(

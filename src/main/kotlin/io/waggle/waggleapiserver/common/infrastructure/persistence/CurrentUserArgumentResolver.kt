@@ -27,6 +27,11 @@ annotation class CurrentUser
 @MustBeDocumented
 annotation class AllowIncompleteSetup
 
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class AllowMissingTermAgreement
+
 @Component
 class CurrentUserArgumentResolver(
     private val userRepository: UserRepository,
@@ -57,7 +62,9 @@ class CurrentUserArgumentResolver(
 
         if (!parameter.hasMethodAnnotation(AllowIncompleteSetup::class.java)) {
             user.checkProfileComplete()
-            termService.checkAllRequiredAgreed(user)
+            if (!parameter.hasMethodAnnotation(AllowMissingTermAgreement::class.java)) {
+                termService.checkAllRequiredAgreed(user)
+            }
         }
 
         return user

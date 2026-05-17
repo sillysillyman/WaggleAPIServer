@@ -43,7 +43,9 @@ class SetupCompleteInterceptor(
                 )
 
         user.checkProfileComplete()
-        termService.checkAllRequiredAgreed(user)
+        if (!handler.hasMethodAnnotation(AllowMissingTermAgreement::class.java)) {
+            termService.checkAllRequiredAgreed(user)
+        }
         return true
     }
 }
