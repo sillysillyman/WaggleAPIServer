@@ -59,10 +59,9 @@ class TermService(
             }
     }
 
-    fun getTerms(user: User?): List<TermResponse> {
+    fun getTerms(user: User): List<TermResponse> {
         val agreedTermIdSet =
-            user?.let { userTermAgreementRepository.findActiveTermIdsByUserId(it.id).toSet() }
-                ?: emptySet()
+            userTermAgreementRepository.findActiveTermIdsByUserId(user.id).toSet()
         return termRepository
             .findLatestActiveOrderByType()
             .map { TermResponse.of(it, agreed = agreedTermIdSet.contains(it.id)) }

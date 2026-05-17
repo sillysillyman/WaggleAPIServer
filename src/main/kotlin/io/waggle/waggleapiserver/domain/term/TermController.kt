@@ -36,6 +36,6 @@ class TermController(
     @GetMapping
     @Operation(summary = "약관 목록 조회 (현재 사용자의 동의 여부 포함)")
     fun getTerms(
-        @CurrentUser user: User?,
+        @CurrentUser user: User,
     ): List<TermResponse> = termService.getTerms(user)
 }

@@ -16,7 +16,7 @@ data class TermResponse(
     val contentUrl: String,
     @Schema(description = "필수 동의 여부", example = "true")
     val mandatory: Boolean,
-    @Schema(description = "현재 사용자의 동의 여부 (비로그인 시 false)", example = "false")
+    @Schema(description = "현재 사용자의 동의 여부", example = "false")
     val agreed: Boolean,
 ) {
     companion object {
