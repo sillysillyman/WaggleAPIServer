@@ -101,6 +101,13 @@
   - `<scope>`은 브랜치 토픽 (예: 브랜치 `fix/security-vulnerabilities` → `fix(security-vulnerabilities): ...`).
   - 브랜치 내 커밋들의 type이 반드시 같을 필요는 없다 — 예) `fix/security-vulnerabilities` 브랜치 안에 `docs(security-vulnerabilities): 보안 점검 리포트 추가` 가능.
   - 한 커밋은 한 가지 결함/기능에 집중. 변경 폭이 넓으면 여러 커밋으로 분리.
+  - **body는 산문이 아니라 `-` 불릿 목록 형식 사용**:
+    ```
+    fix(scope): subject
+
+    - 첫 번째 변경 사항
+    - 두 번째 변경 사항
+    ```
 - **PR 제목**: 동일하게 `<type>(<scope>): <한글 설명>`. 여러 커밋을 묶는 PR이면 제목은 커밋들의 상위 요약으로 한 단계 추상화 (예: PR #109 `fix(missing-cascade-on-delete): 누락된 cascade 정리 결함 수정` — 하위에 `fix(missing-cascade-on-delete): ...` 커밋 여러 개).
 
 ## 9. 인프라 (참고)
