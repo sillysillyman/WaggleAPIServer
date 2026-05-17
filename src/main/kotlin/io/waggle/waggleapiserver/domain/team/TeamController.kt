@@ -4,9 +4,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
-import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
+import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteSetup
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
-import io.waggle.waggleapiserver.common.infrastructure.persistence.RequireCompleteProfile
+import io.waggle.waggleapiserver.common.infrastructure.persistence.RequireCompleteSetup
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationCreateRequest
@@ -66,14 +66,14 @@ class TeamController(
         @CurrentUser user: User,
     ): ApplicationResponse = applicationService.applyToTeam(teamId, request, user)
 
-    @RequireCompleteProfile
+    @RequireCompleteSetup
     @Operation(summary = "팀 프로필 이미지 업로드용 Presigned URL 생성")
     @PostMapping("/profile-image/presigned-url")
     fun generateProfileImagePresignedUrl(
         @Valid @RequestBody request: PresignedUrlRequest,
     ): PresignedUrlResponse = teamService.generateProfileImagePresignedUrl(request)
 
-    @AllowIncompleteProfile
+    @AllowIncompleteSetup
     @Operation(summary = "팀 상세 조회")
     @GetMapping("/{teamId}")
     fun getTeam(
@@ -81,7 +81,7 @@ class TeamController(
         @CurrentUser user: User?,
     ): TeamResponse = teamService.getTeam(teamId, user)
 
-    @AllowIncompleteProfile
+    @AllowIncompleteSetup
     @Operation(summary = "팀 멤버 목록 조회")
     @GetMapping("/{teamId}/members")
     fun getTeamMembers(
@@ -102,7 +102,7 @@ class TeamController(
     ): CursorResponse<TeamApplicationResponse> =
         applicationService.getTeamApplications(teamId, postId, cursorQuery, user)
 
-    @AllowIncompleteProfile
+    @AllowIncompleteSetup
     @Operation(summary = "팀 모집글 목록 조회")
     @GetMapping("/{teamId}/posts")
     fun getTeamPosts(

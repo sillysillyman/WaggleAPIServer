@@ -4,9 +4,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
-import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
+import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteSetup
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
-import io.waggle.waggleapiserver.common.infrastructure.persistence.RequireCompleteProfile
+import io.waggle.waggleapiserver.common.infrastructure.persistence.RequireCompleteSetup
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.post.dto.request.PostCreateRequest
@@ -45,14 +45,14 @@ class PostController(
         @CurrentUser user: User,
     ): PostDetailResponse = postService.createPost(request, user)
 
-    @RequireCompleteProfile
+    @RequireCompleteSetup
     @Operation(summary = "모집글 본문 이미지 업로드용 Presigned URL 생성")
     @PostMapping("/content-image/presigned-url")
     fun generateContentImagePresignedUrl(
         @Valid @RequestBody request: PresignedUrlRequest,
     ): PresignedUrlResponse = postService.generateContentImagePresignedUrl(request)
 
-    @AllowIncompleteProfile
+    @AllowIncompleteSetup
     @Operation(summary = "모집글 목록 커서 페이지네이션 조회")
     @GetMapping
     fun getPosts(
@@ -60,7 +60,7 @@ class PostController(
         @Valid @ParameterObject cursorQuery: CursorGetQuery,
     ): CursorResponse<PostSimpleResponse> = postService.getPosts(query, cursorQuery)
 
-    @AllowIncompleteProfile
+    @AllowIncompleteSetup
     @Operation(summary = "모집글 상세 조회")
     @GetMapping("/{postId}")
     fun getPost(

@@ -6,7 +6,8 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
-import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteProfile
+import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteSetup
+import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowMissingTermAgreement
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
@@ -50,7 +51,7 @@ class UserController(
     private val followService: FollowService,
     private val userService: UserService,
 ) {
-    @AllowIncompleteProfile
+    @AllowIncompleteSetup
     @Operation(summary = "사용자 프로필 초기 설정")
     @PostMapping("/me/profile")
     fun setupProfile(
@@ -88,6 +89,7 @@ class UserController(
         @PathVariable userId: UUID,
     ): List<UserTeamResponse> = userService.getUserTeams(userId, includeHidden = false)
 
+    @AllowMissingTermAgreement
     @Operation(summary = "본인 프로필 조회")
     @GetMapping("/me")
     fun getMyProfile(
@@ -125,7 +127,7 @@ class UserController(
         @CurrentUser user: User,
     ): List<UserSimpleResponse> = followService.getUserFollowers(user.id)
 
-    @AllowIncompleteProfile
+    @AllowIncompleteSetup
     @Operation(summary = "프로필 완성 여부 조회")
     @GetMapping("/me/profile-completion")
     fun getMyProfileCompletion(

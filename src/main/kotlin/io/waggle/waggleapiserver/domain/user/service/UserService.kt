@@ -22,6 +22,7 @@ import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentRepository
 import io.waggle.waggleapiserver.domain.team.dto.response.UserTeamResponse
 import io.waggle.waggleapiserver.domain.team.repository.TeamRepository
+import io.waggle.waggleapiserver.domain.term.repository.UserTermAgreementRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.dto.request.MemberUpdateVisibilityRequest
 import io.waggle.waggleapiserver.domain.user.dto.request.UserSetupProfileRequest
@@ -55,6 +56,7 @@ class UserService(
     private val recruitmentRepository: RecruitmentRepository,
     private val teamRepository: TeamRepository,
     private val userRepository: UserRepository,
+    private val userTermAgreementRepository: UserTermAgreementRepository,
 ) {
     @Transactional
     fun setupProfile(
@@ -246,6 +248,7 @@ class UserService(
         bookmarkRepository.deleteByIdUserId(user.id)
         notificationRepository.deleteByMetadataPostUserId(user.id)
         notificationRepository.deleteByUserId(user.id)
+        userTermAgreementRepository.deleteByUserId(user.id)
 
         authService.deleteRefreshToken(user.id)
 

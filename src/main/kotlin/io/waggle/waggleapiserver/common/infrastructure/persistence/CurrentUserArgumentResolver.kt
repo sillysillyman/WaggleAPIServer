@@ -3,6 +3,7 @@ package io.waggle.waggleapiserver.common.infrastructure.persistence
 import io.swagger.v3.oas.annotations.Parameter
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
+import io.waggle.waggleapiserver.domain.term.service.TermService
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import io.waggle.waggleapiserver.security.oauth2.UserPrincipal
@@ -24,11 +25,17 @@ annotation class CurrentUser
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class AllowIncompleteProfile
+annotation class AllowIncompleteSetup
+
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class AllowMissingTermAgreement
 
 @Component
 class CurrentUserArgumentResolver(
     private val userRepository: UserRepository,
+    private val termService: TermService,
 ) : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean =
         parameter.hasParameterAnnotation(CurrentUser::class.java) &&
@@ -53,8 +60,11 @@ class CurrentUserArgumentResolver(
             userRepository.findByIdOrNull(userPrincipal.userId)
                 ?: throw BusinessException(ErrorCode.ENTITY_NOT_FOUND, "User not found: ${userPrincipal.userId}")
 
-        if (!parameter.hasMethodAnnotation(AllowIncompleteProfile::class.java)) {
+        if (!parameter.hasMethodAnnotation(AllowIncompleteSetup::class.java)) {
             user.checkProfileComplete()
+            if (!parameter.hasMethodAnnotation(AllowMissingTermAgreement::class.java)) {
+                termService.checkAllRequiredAgreed(user)
+            }
         }
 
         return user
