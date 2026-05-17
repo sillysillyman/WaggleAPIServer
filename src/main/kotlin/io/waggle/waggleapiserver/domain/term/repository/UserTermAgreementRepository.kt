@@ -11,8 +11,6 @@ interface UserTermAgreementRepository : JpaRepository<UserTermAgreement, Long> {
         termId: Long,
     ): UserTermAgreement?
 
-    fun deleteByUserId(userId: UUID)
-
     @Query(
         """
         SELECT COUNT(uta) FROM UserTermAgreement uta
@@ -25,4 +23,14 @@ interface UserTermAgreementRepository : JpaRepository<UserTermAgreement, Long> {
         userId: UUID,
         termIds: List<Long>,
     ): Long
+
+    @Query(
+        """
+        SELECT uta.termId FROM UserTermAgreement uta
+        WHERE uta.userId = :userId AND uta.withdrawnAt IS NULL
+        """,
+    )
+    fun findActiveTermIdsByUserId(userId: UUID): List<Long>
+
+    fun deleteByUserId(userId: UUID)
 }

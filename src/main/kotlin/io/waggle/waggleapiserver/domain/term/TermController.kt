@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.infrastructure.persistence.AllowIncompleteSetup
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.term.dto.request.TermsAgreeRequest
-import io.waggle.waggleapiserver.domain.term.dto.response.TermAgreementStatusResponse
 import io.waggle.waggleapiserver.domain.term.dto.response.TermResponse
 import io.waggle.waggleapiserver.domain.term.service.TermService
 import io.waggle.waggleapiserver.domain.user.User
@@ -35,13 +34,8 @@ class TermController(
 
     @AllowIncompleteSetup
     @GetMapping
-    @Operation(summary = "약관 목록 조회")
-    fun getCurrentTerms(): List<TermResponse> = termService.getCurrentTerms()
-
-    @AllowIncompleteSetup
-    @GetMapping("/agreement-status")
-    @Operation(summary = "약관 동의 여부 조회")
-    fun getAgreementStatus(
-        @CurrentUser user: User,
-    ): TermAgreementStatusResponse = termService.getAgreementStatus(user)
+    @Operation(summary = "약관 목록 조회 (현재 사용자의 동의 여부 포함)")
+    fun getTerms(
+        @CurrentUser user: User?,
+    ): List<TermResponse> = termService.getTerms(user)
 }

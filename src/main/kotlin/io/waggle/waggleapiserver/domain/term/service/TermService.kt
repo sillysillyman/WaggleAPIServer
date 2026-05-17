@@ -4,7 +4,6 @@ import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.domain.term.UserTermAgreement
 import io.waggle.waggleapiserver.domain.term.dto.request.TermsAgreeRequest
-import io.waggle.waggleapiserver.domain.term.dto.response.TermAgreementStatusResponse
 import io.waggle.waggleapiserver.domain.term.dto.response.TermResponse
 import io.waggle.waggleapiserver.domain.term.repository.TermRepository
 import io.waggle.waggleapiserver.domain.term.repository.UserTermAgreementRepository
@@ -60,11 +59,14 @@ class TermService(
             }
     }
 
-    fun getCurrentTerms(): List<TermResponse> =
-        termRepository.findLatestActiveOrderByType().map { TermResponse.from(it) }
-
-    fun getAgreementStatus(user: User): TermAgreementStatusResponse =
-        TermAgreementStatusResponse(agreed = hasAgreedToAllRequiredTerms(user))
+    fun getTerms(user: User?): List<TermResponse> {
+        val agreedTermIdSet =
+            user?.let { userTermAgreementRepository.findActiveTermIdsByUserId(it.id).toSet() }
+                ?: emptySet()
+        return termRepository
+            .findLatestActiveOrderByType()
+            .map { TermResponse.of(it, agreed = agreedTermIdSet.contains(it.id)) }
+    }
 
     fun checkAllRequiredAgreed(user: User) {
         if (!hasAgreedToAllRequiredTerms(user)) {
