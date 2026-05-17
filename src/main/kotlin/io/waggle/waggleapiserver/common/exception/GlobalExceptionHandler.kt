@@ -25,7 +25,11 @@ class GlobalExceptionHandler(
 
     @ExceptionHandler(BusinessException::class)
     fun handleBusinessException(e: BusinessException): ResponseEntity<ErrorResponse> {
-        logger.warn("Business exception occurred: ${e.errorCode}", e)
+        if (e.errorCode.status.is5xxServerError) {
+            logger.error("Business exception occurred: ${e.errorCode}", e)
+        } else {
+            logger.warn("Business exception occurred: ${e.errorCode} - ${e.message}")
+        }
         val errorResponse =
             ErrorResponse(
                 status = e.errorCode.status.value(),
@@ -42,7 +46,7 @@ class GlobalExceptionHandler(
     fun handleMethodArgumentTypeMismatchException(
         e: MethodArgumentTypeMismatchException,
     ): ResponseEntity<ErrorResponse> {
-        logger.warn("Type mismatch exception occurred", e)
+        logger.warn("Type mismatch exception occurred: ${e.message}")
         val detail =
             "Invalid type for parameter '${e.name}': expected ${e.requiredType?.simpleName}"
         val errorResponse =
@@ -81,7 +85,7 @@ class GlobalExceptionHandler(
         status: HttpStatusCode,
         request: WebRequest,
     ): ResponseEntity<Any> {
-        logger.warn("Validation exception occurred", e)
+        logger.warn("Validation exception occurred: ${e.message}")
         val errors =
             e.bindingResult.allErrors.joinToString(", ") { error ->
                 val fieldName = (error as? FieldError)?.field ?: "unknown"
@@ -107,7 +111,11 @@ class GlobalExceptionHandler(
         statusCode: HttpStatusCode,
         request: WebRequest,
     ): ResponseEntity<Any> {
-        logger.warn("Spring MVC exception occurred: ${e.javaClass.simpleName}", e)
+        if (statusCode.is5xxServerError) {
+            logger.error("Spring MVC exception occurred: ${e.javaClass.simpleName}", e)
+        } else {
+            logger.warn("Spring MVC exception occurred: ${e.javaClass.simpleName} - ${e.message}")
+        }
         val code = (statusCode as? HttpStatus)?.name ?: statusCode.value().toString()
         val errorResponse =
             ErrorResponse(
