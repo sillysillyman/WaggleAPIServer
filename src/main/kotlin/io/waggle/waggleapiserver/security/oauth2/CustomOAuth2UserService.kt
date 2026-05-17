@@ -7,6 +7,8 @@ import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.core.OAuth2Error
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
@@ -26,7 +28,7 @@ class CustomOAuth2UserService(
 
                 "kakao" -> KakaoUserInfo(oauth2User.attributes)
 
-                else -> throw BusinessException(
+                else -> throw oauth2AuthenticationException(
                     ErrorCode.INVALID_INPUT_VALUE,
                     "Unsupported provider: $registrationId",
                 )
@@ -34,13 +36,13 @@ class CustomOAuth2UserService(
 
         val email = userInfo.email
         if (email.isNullOrBlank()) {
-            throw BusinessException(
+            throw oauth2AuthenticationException(
                 ErrorCode.OAUTH_EMAIL_MISSING,
                 "Email not provided by ${userInfo.provider}",
             )
         }
         if (!userInfo.isEmailVerified) {
-            throw BusinessException(
+            throw oauth2AuthenticationException(
                 ErrorCode.OAUTH_EMAIL_NOT_VERIFIED,
                 "Email not verified by ${userInfo.provider}",
             )
@@ -64,7 +66,7 @@ class CustomOAuth2UserService(
                     userRepository.save(deletedUser)
                 } else {
                     if (userRepository.existsByEmail(email)) {
-                        throw BusinessException(
+                        throw oauth2AuthenticationException(
                             ErrorCode.DUPLICATE_RESOURCE,
                             "Already existing email: $email",
                         )
@@ -89,4 +91,14 @@ class CustomOAuth2UserService(
 
         return DefaultOAuth2User(oauth2User.authorities, attributes, "email")
     }
+
+    private fun oauth2AuthenticationException(
+        errorCode: ErrorCode,
+        detail: String,
+    ): OAuth2AuthenticationException =
+        OAuth2AuthenticationException(
+            OAuth2Error(errorCode.name, detail, null),
+            detail,
+            BusinessException(errorCode, detail),
+        )
 }
