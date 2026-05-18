@@ -5,7 +5,6 @@ interface OAuth2UserInfo {
     val providerId: String
     val email: String?
     val isEmailVerified: Boolean
-    val name: String
     val profileImageUrl: String?
 }
 
@@ -19,8 +18,6 @@ class GoogleUserInfo(
         get() = attributes["email"] as? String
     override val isEmailVerified: Boolean
         get() = attributes["email_verified"] as? Boolean ?: false
-    override val name: String
-        get() = attributes["name"] as String
     override val profileImageUrl: String?
         get() = attributes["picture"] as? String
 }
@@ -31,8 +28,8 @@ class KakaoUserInfo(
     private val kakaoAccount: Map<*, *>
         get() = attributes["kakao_account"] as Map<*, *>
 
-    private val profile: Map<*, *>
-        get() = kakaoAccount["profile"] as Map<*, *>
+    private val profile: Map<*, *>?
+        get() = kakaoAccount["profile"] as? Map<*, *>
 
     override val provider = "kakao"
     override val providerId: String
@@ -43,8 +40,6 @@ class KakaoUserInfo(
         get() =
             (kakaoAccount["is_email_verified"] as? Boolean ?: false) &&
                 (kakaoAccount["is_email_valid"] as? Boolean ?: false)
-    override val name: String
-        get() = profile["nickname"] as String
     override val profileImageUrl: String?
-        get() = profile["profile_image_url"] as? String
+        get() = profile?.get("profile_image_url") as? String
 }
