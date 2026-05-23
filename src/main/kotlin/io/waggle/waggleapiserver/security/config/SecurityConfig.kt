@@ -1,6 +1,8 @@
 package io.waggle.waggleapiserver.security.config
 
 import io.waggle.waggleapiserver.security.filter.RateLimitFilter
+import io.waggle.waggleapiserver.security.jwt.JwtAccessDeniedHandler
+import io.waggle.waggleapiserver.security.jwt.JwtAuthenticationEntryPoint
 import io.waggle.waggleapiserver.security.jwt.JwtAuthenticationFilter
 import io.waggle.waggleapiserver.security.oauth2.CustomOAuth2UserService
 import io.waggle.waggleapiserver.security.oauth2.OAuth2LoginFailureHandler
@@ -25,6 +27,8 @@ class SecurityConfig(
     private val environment: Environment,
     private val rateLimitFilter: RateLimitFilter,
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint,
+    private val jwtAccessDeniedHandler: JwtAccessDeniedHandler,
     private val customOAuth2UserService: CustomOAuth2UserService,
     private val oAuth2LoginSuccessHandler: OAuth2LoginSuccessHandler,
     private val oAuth2LoginFailureHandler: OAuth2LoginFailureHandler,
@@ -40,6 +44,10 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }.exceptionHandling { exceptions ->
+                exceptions
+                    .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                    .accessDeniedHandler(jwtAccessDeniedHandler)
             }
 
         http
