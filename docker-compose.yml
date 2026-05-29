@@ -68,6 +68,7 @@ services:
       - "127.0.0.1:3306:3306"
     volumes:
       - db-data:/var/lib/mysql
+      - ./mysql/conf.d/client-utf8.cnf:/etc/mysql/conf.d/client-utf8.cnf:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
