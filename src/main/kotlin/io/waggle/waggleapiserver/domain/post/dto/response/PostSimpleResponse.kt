@@ -20,6 +20,8 @@ data class PostSimpleResponse(
     val recruiting: Boolean,
     @Schema(description = "모집 정보 목록")
     val recruitments: List<RecruitmentResponse>,
+    @Schema(description = "댓글 수 (삭제된 댓글 제외)", example = "3")
+    val commentCount: Long,
     @Schema(description = "모집글 생성일시", example = "2025-11-16T12:30:45.123456Z")
     val createdAt: Instant,
 ) : BookmarkResponse {
@@ -28,6 +30,7 @@ data class PostSimpleResponse(
             post: Post,
             user: UserSimpleResponse,
             recruitments: List<RecruitmentResponse> = emptyList(),
+            commentCount: Long = 0,
         ): PostSimpleResponse =
             PostSimpleResponse(
                 id = post.id,
@@ -35,6 +38,7 @@ data class PostSimpleResponse(
                 user = user,
                 recruiting = recruitments.any { it.status == RecruitmentStatus.RECRUITING },
                 recruitments = recruitments,
+                commentCount = commentCount,
                 createdAt = post.createdAt,
             )
     }
