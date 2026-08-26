@@ -14,6 +14,10 @@
   - `repository/` — JPA 레포지토리
   - `service/` — 비즈니스 로직
   - `enums/` — 도메인 enum
+- **컨트롤러가 둘 이상인 도메인은 `controller/` 하위로 모을 것** (예: `domain/comment/controller/`). 하나뿐이면 도메인 루트에 그대로 둔다.
+  - `domain/message/`는 아직 루트에 둘을 두고 있다 — 이 규칙 도입 이전 코드이며, 정리 대상.
+- **리포지토리 메서드는 반환 타입 순으로 선언할 것**: 단순 타입(`Boolean`/`Int`/`Long`) → 엔티티 단건(`Entity?`) → 목록(`List<Entity>`, `List<Projection>`) → 쓰기(`Unit`: `update*`/`delete*`/`markAs*`).
+  - 프로젝션 인터페이스는 리포지토리 인터페이스 아래 같은 파일에 둔다 (`ApplicationRepository`의 `PostApplicantCount` 전례).
 
 ## 2. 엔티티 / 영속성
 
@@ -22,9 +26,26 @@
 - **Soft delete 필터**: `AuditingEntity`의 `@Filter("deleted_at IS NULL")`가 `SoftDeleteFilterAspect`를 통해 모든 `@Transactional` 메서드에서 활성화된다. JPQL은 이 필터의 영향을 받지만 native 쿼리는 받지 않는다.
   - 이미 삭제된 행을 조회/수정하는 쿼리(`deleted_at IS NOT NULL` 조건 포함) 작성 시 **반드시 `nativeQuery = true`**, 컬럼명은 snake_case로 작성할 것.
   - 메서드 이름에 `DeletedAt` 키워드가 들어가면 native 여부를 한 번 더 확인할 것.
+- **엔티티 변경은 영속성 컨텍스트에만 반영되고 DB로는 즉시 나가지 않는다.** 리포지토리 조회는 JPQL·derived·`@Query(nativeQuery = true)` 모두 자동 flush가 선행되므로 수동 `flush()`를 부르지 말 것 (JPA `FlushModeType.AUTO`, 실측 확인).
+  - 예외는 **테스트의 `JdbcTemplate`**뿐이다. Hibernate를 우회하므로 flush가 트리거되지 않아 **변경 이전 상태를 읽는다.** 통합 테스트에서 `count(...)`로 검증할 때 주의할 것.
+
+    ```kotlin
+    comment.delete()                                        // 메모리에만 반영
+    commentRepository.existsByPostIdAndParentId(...)        // ✓ 자동 flush 후 조회
+    jdbcTemplate.queryForObject("SELECT ... FROM comments") // ✗ 변경 이전 상태를 봄
+    ```
+  - 벌크 UPDATE 후 같은 트랜잭션에서 그 엔티티를 다시 읽어야 하면 `@Modifying(clearAutomatically = true)`를 쓴다. 현재 코드베이스는 cascade 벌크 UPDATE 뒤에 해당 엔티티를 읽지 않아 기본값으로 충분하다.
 - **타임스탬프 UPDATE 쿼리**: native 쿼리 + MySQL `UTC_TIMESTAMP(6)` 사용. 앱에서 `Instant.now()`를 파라미터로 전달하지 말 것.
   - 이유: prod는 JDBC URL에 `serverTimezone=UTC`가 설정되어 있으나 local은 미설정 → `CURRENT_TIMESTAMP`는 환경 의존적. `UTC_TIMESTAMP()`는 세션 timezone 무관하게 항상 UTC를 반환한다.
   - `datetime(6)` 컬럼이므로 정밀도 손실을 막기 위해 `UTC_TIMESTAMP(6)`를 쓸 것 (괄호 없는 형태 금지).
+- **엔티티의 비영속 프로퍼티는 반드시 `get() =`로 쓸 것. 초기화식(`= value`)은 백킹 필드를 만들어 유령 컬럼이 된다.**
+
+  ```kotlin
+  override val type: BookmarkType = BookmarkType.POST        // ✗ 백킹 필드 → posts.type 컬럼을 찾다 에러
+  override val type: BookmarkType get() = BookmarkType.POST  // ✓ getter만 생성, Hibernate가 무시
+  ```
+
+  `Bookmarkable` 같은 인터페이스 구현 시 특히 실수하기 쉽다. `@Access(AccessType.FIELD)`는 이 문제를 막아주지 않는다 — 오히려 필드를 보게 하는 애너테이션이다. JPA 접근 방식은 `@Id`가 필드에 붙는 것으로 이미 FIELD로 결정되므로 `@Access`는 붙이지 말 것.
 - ID 전략: 사용자(`User`)는 `UuidCreator.getTimeOrderedEpoch()` (UUID v7 계열), 일반 도메인은 Long auto-increment.
 - **시간순 정렬은 `created_at`이 아니라 `id` 기준으로 할 것** (Long auto-increment 도메인 기준). id가 삽입 순서와 단조 증가해 정렬 결과가 `created_at`과 동일하고(동일 시각 tie는 id가 더 정확), `WHERE <equality-prefix> ORDER BY id`는 InnoDB가 secondary index에 PK(`id`)를 덧붙여 filesort 없이 처리된다.
   - `created_at` 전용 정렬 컬럼/인덱스를 신설하지 말 것. 시간순 인덱스는 `(team_id)`, `(user_id)`처럼 equality 컬럼만 만들면 PK가 자동으로 붙는다.
@@ -33,6 +54,19 @@
 ## 3. Controller / API
 
 - OpenAPI 문서화: 컨트롤러에 `@Tag`, 메서드에 `@Operation` 부여할 것.
+- **중첩 리소스는 shallow nesting**: 컬렉션(생성·목록)만 부모 경로 아래 두고, 개별 항목(수정·삭제)은 최상위에 둔다. 자식 id가 전역 고유하므로 `PUT /posts/1/comments/42`는 `postId`가 중복 정보이고, 검증하지 않으면 `/posts/999/comments/42`도 통과해버린다.
+
+  ```
+  POST   /posts/{postId}/comments   PostCommentController
+  GET    /posts/{postId}/comments   PostCommentController
+  PUT    /comments/{commentId}      CommentController
+  DELETE /comments/{commentId}      CommentController
+  ```
+
+  - **두 컨트롤러 모두 자식 도메인(`domain/comment/controller/`)에 두고 부모 컨트롤러에 얹지 말 것.** 부모에 얹으면 그 엔드포인트가 부모 태그로 묶여 한 도메인 API가 Swagger에서 쪼개진다. `/teams/{teamId}/posts`와 `POST /teams/{teamId}/applications`가 각각 "모집글"·"팀 지원"이 아니라 **"팀"** 으로 나가는 것이 실제 사례다 (정리 대상).
+  - **두 컨트롤러에 같은 `@Tag(name = ...)`을 줄 것.** OpenAPI 태그는 문자열 매칭이라 컨트롤러가 달라도 한 그룹으로 합쳐진다.
+  - **메서드 레벨 `@Tag`로 때우려 하지 말 것.** 클래스 레벨 태그를 덮어쓰지 않고 **더해져서** 해당 오퍼레이션이 두 그룹에 중복 노출된다. 위 두 항목은 `/v3/api-docs`를 실제로 뽑아 확인했다.
+  - URL 계층상의 부모는 경로 변수로, 그 외 참조는 요청 본문으로 받는다. 예) `POST /teams/{teamId}/applications`는 `teamId`가 경로, `postId`가 본문.
 - **쿼리 파라미터 객체 바인딩**: `@ParameterObject` (springdoc) 사용. `@ModelAttribute`는 Swagger에서 개별 쿼리 파라미터가 아닌 JSON 객체로 표시되므로 금지.
 - 페이지네이션: 공통 DTO `common/dto/request/CursorGetQuery`, `common/dto/response/CursorResponse` 사용.
 - **프로필 완성 가드** — 두 메커니즘이 공존하므로 상황에 맞게 선택할 것:
@@ -51,6 +85,17 @@
 
 - **Response DTO는 companion object의 `of()` 또는 `from()` 정적 팩토리로만 생성할 것.** Service/Controller에서 생성자 직접 호출 금지.
   - 도메인 → DTO 변환 로직을 DTO에 캡슐화. 필드 추가 시 팩토리 시그니처와 호출처를 같이 갱신.
+  - **팩토리 파라미터 순서는 생성자 할당 순서와 일치시킬 것.** 필드를 추가할 때 파라미터를 목록 끝에 붙이지 말고 할당되는 자리에 맞춰 끼워넣는다.
+
+    ```kotlin
+    fun of(post: Post, user: …, recruitments: … = emptyList(), commentCount: Long = 0, applicationStatus: … = null) =
+        PostDetailResponse(
+            …
+            recruitments = recruitments,
+            commentCount = commentCount,        // 파라미터 순서와 동일
+            applicationStatus = applicationStatus,
+        )
+    ```
 - 같은 필드에 여러 애너테이션을 붙일 때 **import 순서와 동일한 순서로 위→아래 정렬할 것.**
 
   ```kotlin
@@ -70,6 +115,15 @@
 - spotless + ktlint 1.3.1 적용. **Kotlin 파일 수정을 마무리할 때마다 `./gradlew spotlessApply` 실행할 것.**
   - 컴파일 실패 상태에선 spotless도 실패하므로 컴파일 성공 후 실행.
   - 개별 Edit마다 돌리지 말고 작업(요청받은 기능/수정) 완료 시점에 한 번.
+- **주석은 명사형 종결어미로 쓸 것.** `-한다`/`-된다`/`-없다` 같은 서술형 대신 `-함`/`-됨`/`-불필요`처럼 끝낸다. Kotlin·SQL 주석 모두 해당.
+
+  ```kotlin
+  // 삭제-답글 경합으로 고아 답글이 생기는 것을 막는다.   ✗
+  // 삭제-답글 경합으로 생기는 고아 답글 방지용.            ✓
+
+  // 1-depth이므로 재귀가 필요 없다. depth를 늘릴 때 while 루프가 된다.  ✗
+  // 1-depth이므로 재귀 불필요. depth 확장 시 while 루프가 됨.           ✓
+  ```
 - **변수명에 줄임말 사용 금지** (msg/conv/etc). full name(`message`, `conversation`)을 쓸 것. 프로덕션·테스트 모두 적용.
 - **컬렉션 변수 네이밍**:
   - `List<T>` → `applicationIds`, `members` (복수형 `-s/-es/-ies`)

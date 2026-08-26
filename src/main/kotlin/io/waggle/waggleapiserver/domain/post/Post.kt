@@ -5,8 +5,6 @@ import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.common.exception.ErrorCode
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.Bookmarkable
-import jakarta.persistence.Access
-import jakarta.persistence.AccessType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -16,7 +14,6 @@ import jakarta.persistence.Index
 import jakarta.persistence.Table
 import java.util.UUID
 
-@Access(AccessType.FIELD)
 @Entity
 @Table(
     name = "posts",
