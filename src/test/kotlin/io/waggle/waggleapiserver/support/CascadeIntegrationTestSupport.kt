@@ -9,6 +9,9 @@ import io.waggle.waggleapiserver.domain.bookmark.Bookmark
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkId
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
+import io.waggle.waggleapiserver.domain.comment.Comment
+import io.waggle.waggleapiserver.domain.comment.repository.CommentRepository
+import io.waggle.waggleapiserver.domain.comment.service.CommentService
 import io.waggle.waggleapiserver.domain.follow.Follow
 import io.waggle.waggleapiserver.domain.follow.repository.FollowRepository
 import io.waggle.waggleapiserver.domain.member.Member
@@ -120,6 +123,12 @@ abstract class CascadeIntegrationTestSupport {
     protected lateinit var postRepository: PostRepository
 
     @Autowired
+    protected lateinit var commentService: CommentService
+
+    @Autowired
+    protected lateinit var commentRepository: CommentRepository
+
+    @Autowired
     protected lateinit var recruitmentRepository: RecruitmentRepository
 
     @Autowired
@@ -151,6 +160,7 @@ abstract class CascadeIntegrationTestSupport {
                 "recruitment_skills",
                 "recruitments",
                 "bookmarks",
+                "comments",
                 "notifications",
                 "posts",
                 "members",
@@ -220,6 +230,21 @@ abstract class CascadeIntegrationTestSupport {
                 content = "content",
                 userId = userId,
                 teamId = teamId,
+            ),
+        )
+
+    protected fun createComment(
+        postId: Long,
+        userId: UUID,
+        parentId: Long? = null,
+        content: String = "content",
+    ): Comment =
+        commentRepository.save(
+            Comment(
+                postId = postId,
+                userId = userId,
+                parentId = parentId,
+                content = content,
             ),
         )
 
