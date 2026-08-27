@@ -27,6 +27,8 @@ data class PostDetailResponse(
     val recruiting: Boolean,
     @Schema(description = "모집 정보 목록")
     val recruitments: List<RecruitmentResponse>,
+    @Schema(description = "댓글 수 (삭제된 댓글 제외)", example = "3")
+    val commentCount: Long,
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(description = "현재 사용자의 이 모집글에 대한 지원 상태")
     val applicationStatus: ApplicationStatus? = null,
@@ -39,6 +41,7 @@ data class PostDetailResponse(
             user: UserSimpleResponse,
             team: TeamResponse,
             recruitments: List<RecruitmentResponse> = emptyList(),
+            commentCount: Long = 0,
             applicationStatus: ApplicationStatus? = null,
         ): PostDetailResponse =
             PostDetailResponse(
@@ -49,6 +52,7 @@ data class PostDetailResponse(
                 team = team,
                 recruiting = recruitments.any { it.status == RecruitmentStatus.RECRUITING },
                 recruitments = recruitments,
+                commentCount = commentCount,
                 applicationStatus = applicationStatus,
                 createdAt = post.createdAt,
             )

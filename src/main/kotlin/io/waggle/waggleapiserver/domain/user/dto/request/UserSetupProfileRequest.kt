@@ -6,12 +6,14 @@ import io.waggle.waggleapiserver.domain.user.enums.Position
 import io.waggle.waggleapiserver.domain.user.enums.Skill
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 @Schema(description = "사용자 프로필 초기 설정 요청 DTO")
 data class UserSetupProfileRequest(
-    @Schema(description = "사용자명", example = "testUser")
+    @Schema(description = "사용자명 (한글·영문·숫자 2~20자)", example = "testUser")
     @field:NotBlank
+    @field:Pattern(regexp = "^[가-힣a-zA-Z0-9]{2,20}$")
     val username: String,
     @Schema(description = "직무", example = "BACKEND")
     @field:NotNull

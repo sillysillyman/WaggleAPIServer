@@ -8,6 +8,7 @@ import io.waggle.waggleapiserver.common.storage.StorageClient
 import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
+import io.waggle.waggleapiserver.domain.comment.repository.CommentRepository
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.post.Post
@@ -42,6 +43,7 @@ class PostService(
     private val eventPublisher: ApplicationEventPublisher,
     private val storageClient: StorageClient,
     private val applicationRepository: ApplicationRepository,
+    private val commentRepository: CommentRepository,
     private val memberRepository: MemberRepository,
     private val postRepository: PostRepository,
     private val recruitmentRepository: RecruitmentRepository,
@@ -143,6 +145,15 @@ class PostService(
         val recruitmentsByPostId =
             recruitmentRepository.findByPostIdIn(postIds).groupBy { it.postId }
 
+        val commentCountByPostId =
+            if (postIds.isEmpty()) {
+                emptyMap()
+            } else {
+                commentRepository
+                    .countCommentsGroupByPostId(postIds)
+                    .associate { it.postId to it.commentCount }
+            }
+
         val data =
             content.map { post ->
                 val author =
@@ -160,6 +171,7 @@ class PostService(
                     post,
                     UserSimpleResponse.from(author),
                     recruitments,
+                    commentCountByPostId[post.id] ?: 0,
                 )
             }
 
@@ -204,6 +216,7 @@ class PostService(
             UserSimpleResponse.from(author),
             TeamResponse.of(team, memberCount, memberRole),
             recruitments,
+            commentRepository.countByPostId(postId),
             applicationStatus,
         )
     }
@@ -339,6 +352,7 @@ class PostService(
             UserSimpleResponse.from(user),
             TeamResponse.of(team, memberCount, member.role),
             savedRecruitments.map { RecruitmentResponse.from(it) },
+            commentCount = commentRepository.countByPostId(postId),
         )
     }
 

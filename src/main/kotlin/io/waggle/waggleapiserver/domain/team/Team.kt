@@ -7,8 +7,6 @@ import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.Bookmarkable
 import io.waggle.waggleapiserver.domain.team.enums.TeamStatus
 import io.waggle.waggleapiserver.domain.team.enums.WorkMode
-import jakarta.persistence.Access
-import jakarta.persistence.AccessType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -20,7 +18,6 @@ import jakarta.persistence.Index
 import jakarta.persistence.Table
 import java.util.UUID
 
-@Access(AccessType.FIELD)
 @Entity
 @Table(
     name = "teams",
