@@ -1,10 +1,11 @@
-package io.waggle.waggleapiserver.domain.application
+package io.waggle.waggleapiserver.domain.application.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.dto.response.CursorResponse
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
+import io.waggle.waggleapiserver.domain.application.ApplicationStatus
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationUpdateRequest
 import io.waggle.waggleapiserver.domain.application.dto.request.ApplicationUpdateStatusRequest
 import io.waggle.waggleapiserver.domain.application.dto.response.ApplicationResponse
