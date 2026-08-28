@@ -1,4 +1,4 @@
-package io.waggle.waggleapiserver.domain.post
+package io.waggle.waggleapiserver.domain.post.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag

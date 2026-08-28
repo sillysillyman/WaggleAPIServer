@@ -1,4 +1,4 @@
-package io.waggle.waggleapiserver.domain.message
+package io.waggle.waggleapiserver.domain.message.controller
 
 import io.waggle.waggleapiserver.domain.message.dto.request.MessageSendRequest
 import io.waggle.waggleapiserver.domain.message.service.MessageService
