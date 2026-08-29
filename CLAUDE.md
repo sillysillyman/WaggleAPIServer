@@ -156,7 +156,31 @@
 ## 8. Git / PR
 
 - **브랜치 네이밍**: `<type>/<kebab-topic>` — type은 `feat`, `fix`, `hotfix`, `refactor`, `chore`, `docs`, `ci` 중 하나. 토픽은 영문 kebab-case (예: `feat/post-image-embed`, `fix/missing-cascade-on-delete`).
-- 베이스 브랜치는 항상 `main`.
+- **리모트 구조** — fork 기반 triangular workflow (읽기는 `upstream`, 쓰기는 `origin`):
+
+  | 리모트 | 저장소 | 역할 |
+  |---|---|---|
+  | `upstream` | `Team-Waggle/WaggleAPIServer` | 진실의 원천. 읽기 전용으로 취급 — 직접 push 금지 |
+  | `origin` | `sillysillyman/WaggleAPIServer` | 개인 포크. 모든 push 대상 |
+
+- **베이스 브랜치는 항상 `upstream/main`.** `origin/main`은 fork sync 시점에 따라 뒤처져 있을 수 있으므로 파생 소스로 쓰지 말 것.
+
+  ```bash
+  git fetch upstream                              # 캐시된 remote-tracking ref 갱신
+  git switch -c <type>/<topic> upstream/main
+  git push -u origin <type>/<topic>
+  ```
+
+  - `upstream/main`에서 파생하면 Git이 `branch.autoSetupMerge` 기본값 탓에 추적 대상을 `upstream/main`으로 잡는다. 맨 `git push`가 upstream으로 나가는 사고를 막기 위해 `git config remote.pushDefault origin`을 걸어둘 것.
+  - 작업 브랜치를 `upstream`에 직접 push하지 말 것.
+- **PR은 `origin:<브랜치>` → `upstream:main`.** `gh` 사용 시 base를 명시할 것:
+
+  ```bash
+  gh pr create --repo Team-Waggle/WaggleAPIServer --base main --head sillysillyman:<브랜치>
+  ```
+
+  - 머지 후 GitHub "Sync fork"로 `origin/main`을 갱신한다. 이 동기화는 포크 정리용일 뿐, 다음 작업의 선행 조건이 아니다 (파생은 항상 `upstream/main`에서 하므로).
+  - fork sync가 만드는 `Merge branch 'Team-Waggle:main' into main` 머지 커밋이 upstream 히스토리로 역유입되지 않게 하는 것도 위 파생 규칙의 목적이다.
 - **커밋 메시지**: `<type>(<scope>): <한글 설명>`
   - `<scope>`은 브랜치 토픽 (예: 브랜치 `fix/security-vulnerabilities` → `fix(security-vulnerabilities): ...`).
   - 브랜치 내 커밋들의 type이 반드시 같을 필요는 없다 — 예) `fix/security-vulnerabilities` 브랜치 안에 `docs(security-vulnerabilities): 보안 점검 리포트 추가` 가능.
