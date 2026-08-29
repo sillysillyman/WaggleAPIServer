@@ -8,11 +8,13 @@ import io.waggle.waggleapiserver.domain.comment.Comment
 import io.waggle.waggleapiserver.domain.comment.dto.request.CommentCreateRequest
 import io.waggle.waggleapiserver.domain.comment.dto.request.CommentUpdateRequest
 import io.waggle.waggleapiserver.domain.comment.dto.response.CommentResponse
+import io.waggle.waggleapiserver.domain.comment.event.CommentDeletedEvent
 import io.waggle.waggleapiserver.domain.comment.repository.CommentRepository
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true)
 class CommentService(
+    private val eventPublisher: ApplicationEventPublisher,
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
@@ -137,6 +140,9 @@ class CommentService(
                     "Comment not found: $commentId",
                 )
         comment.checkOwnership(user.id)
+
+        // tombstone도 본문이 사라지므로 좋아요 정리 대상. 분기 이전에 한 번만 발행.
+        eventPublisher.publishEvent(CommentDeletedEvent(commentId))
 
         if (comment.isReply) {
             comment.delete()
