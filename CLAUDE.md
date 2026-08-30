@@ -23,9 +23,12 @@
 
 - 수정 추적과 soft delete가 필요한 엔티티는 `AuditingEntity`를 상속할 것 (`createdAt`, `updatedAt`, `deletedAt` 자동 관리).
   - 예외: append-only 성격이거나 hard delete만 하는 엔티티는 자체 관리. 예) `Notification`은 `read_at`으로 상태를 추적하고 `created_at`만 자체 관리, `Bookmark`는 복합키 + 토글 시 hard delete.
-- **Soft delete 필터**: `AuditingEntity`의 `@Filter("deleted_at IS NULL")`가 `SoftDeleteFilterAspect`를 통해 모든 `@Transactional` 메서드에서 활성화된다. JPQL은 이 필터의 영향을 받지만 native 쿼리는 받지 않는다.
-  - 이미 삭제된 행을 조회/수정하는 쿼리(`deleted_at IS NOT NULL` 조건 포함) 작성 시 **반드시 `nativeQuery = true`**, 컬럼명은 snake_case로 작성할 것.
-  - 메서드 이름에 `DeletedAt` 키워드가 들어가면 native 여부를 한 번 더 확인할 것.
+- **Soft delete 필터**: soft delete 대상 엔티티는 `@Entity` 아래에 `@SQLRestriction("deleted_at IS NULL")`을 붙일 것. 항상 적용되므로 켜는 코드가 필요 없고, `em.find()`(=`findByIdOrNull`)와 트랜잭션 밖 호출까지 모두 가려진다.
+  - **`AuditingEntity`(`@MappedSuperclass`)에 붙이면 상속되지 않는다** (실측 확인). 엔티티마다 각각 붙일 것.
+  - **native 쿼리에는 적용되지 않는다.** restriction은 끌 수 없으므로 native가 삭제된 행에 접근하는 유일한 경로다.
+  - 이미 삭제된 행을 조회/수정하는 쿼리(`deleted_at IS NOT NULL` 조건 포함) 작성 시 **반드시 `nativeQuery = true`**, 컬럼명은 snake_case로 작성할 것. 재가입 시 멤버·팔로우 복원과 탈퇴자 조회가 여기 의존한다 (`findByIdIgnoringDeletion`, `findByUserIdAndTeamIdIncludingDeleted` 등).
+  - 메서드 이름에 `DeletedAt`·`IncludingDeleted`·`IgnoringDeletion` 키워드가 들어가면 native 여부를 한 번 더 확인할 것.
+  - **삭제된 행을 되살릴 때는 같은 트랜잭션 안에서 native로 로드해 dirty checking에 맡길 것.** detached 상태로 `save()`를 부르면 `merge()`가 restriction에 막혀 행을 못 찾고 INSERT를 시도한다 (`Duplicate entry` 또는 `StaleObjectStateException`). 재가입 멤버 복원(`ApplicationService`), 재팔로우(`FollowService`), 재가입 사용자(`CustomOAuth2UserService`)가 모두 이 형태다.
 - **엔티티 변경은 영속성 컨텍스트에만 반영되고 DB로는 즉시 나가지 않는다.** 리포지토리 조회는 JPQL·derived·`@Query(nativeQuery = true)` 모두 자동 flush가 선행되므로 수동 `flush()`를 부르지 말 것 (JPA `FlushModeType.AUTO`, 실측 확인).
   - 예외는 **테스트의 `JdbcTemplate`**뿐이다. Hibernate를 우회하므로 flush가 트리거되지 않아 **변경 이전 상태를 읽는다.** 통합 테스트에서 `count(...)`로 검증할 때 주의할 것.
 

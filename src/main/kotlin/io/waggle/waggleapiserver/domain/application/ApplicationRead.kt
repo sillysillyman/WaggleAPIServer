@@ -9,9 +9,11 @@ import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.SQLRestriction
 import java.util.UUID
 
 @Entity
+@SQLRestriction("deleted_at IS NULL")
 @Table(
     name = "application_reads",
     uniqueConstraints = [UniqueConstraint(columnNames = ["application_id", "user_id"])],
