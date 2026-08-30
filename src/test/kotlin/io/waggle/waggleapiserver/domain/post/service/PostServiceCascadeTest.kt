@@ -1,6 +1,7 @@
 package io.waggle.waggleapiserver.domain.post.service
 
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
+import io.waggle.waggleapiserver.domain.like.LikeType
 import io.waggle.waggleapiserver.domain.notification.NotificationType
 import io.waggle.waggleapiserver.support.CascadeIntegrationTestSupport
 import org.assertj.core.api.Assertions.assertThat
@@ -49,5 +50,31 @@ class PostServiceCascadeTest : CascadeIntegrationTestSupport() {
         assertThat(count("SELECT COUNT(*) FROM posts WHERE id = ? AND deleted_at IS NULL", sibling.id)).isEqualTo(1L)
         assertThat(count("SELECT COUNT(*) FROM recruitments WHERE post_id = ?", sibling.id)).isEqualTo(1L)
         assertThat(count("SELECT COUNT(*) FROM notifications WHERE post_id = ?", sibling.id)).isEqualTo(1L)
+    }
+
+    @Test
+    fun `deletePost는 글과 그 글 댓글의 좋아요를 정리하고 형제 글 좋아요는 보존한다`() {
+        val owner = createUser("owner")
+        val liker = createUser("liker")
+        val team = createTeam(owner.id)
+        val post = createPost(owner.id, team.id)
+        val sibling = createPost(owner.id, team.id)
+        val comment = createComment(post.id, owner.id)
+        val siblingComment = createComment(sibling.id, owner.id)
+
+        createLike(liker.id, LikeType.POST, post.id)
+        createLike(liker.id, LikeType.COMMENT, comment.id)
+        createLike(liker.id, LikeType.POST, sibling.id)
+        createLike(liker.id, LikeType.COMMENT, siblingComment.id)
+
+        postService.deletePost(post.id, owner)
+
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'POST' AND target_id = ?", post.id)).isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", comment.id))
+            .isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'POST' AND target_id = ?", sibling.id))
+            .isEqualTo(1L)
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", siblingComment.id))
+            .isEqualTo(1L)
     }
 }

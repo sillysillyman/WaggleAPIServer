@@ -3,13 +3,17 @@ package io.waggle.waggleapiserver.domain.comment.service
 import io.waggle.waggleapiserver.common.dto.request.CursorGetQuery
 import io.waggle.waggleapiserver.common.exception.BusinessException
 import io.waggle.waggleapiserver.domain.comment.dto.request.CommentCreateRequest
+import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.support.CascadeIntegrationTestSupport
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class CommentServiceTest : CascadeIntegrationTestSupport() {
-    private fun getComments(postId: Long) = commentService.getComments(postId, CursorGetQuery(cursor = null))
+    private fun getComments(
+        postId: Long,
+        user: User? = null,
+    ) = commentService.getComments(postId, CursorGetQuery(cursor = null), user)
 
     @Test
     fun `답글에 답글을 달면 1-depth 제한에 걸린다`() {
@@ -128,6 +132,7 @@ class CommentServiceTest : CascadeIntegrationTestSupport() {
             commentService.getComments(
                 post.id,
                 CursorGetQuery(cursor = null, size = 2),
+                null,
             )
 
         assertThat(firstPage.data).hasSize(2)
@@ -140,6 +145,7 @@ class CommentServiceTest : CascadeIntegrationTestSupport() {
             commentService.getComments(
                 post.id,
                 CursorGetQuery(cursor = firstPage.nextCursor, size = 2),
+                null,
             )
 
         assertThat(secondPage.data).hasSize(1)

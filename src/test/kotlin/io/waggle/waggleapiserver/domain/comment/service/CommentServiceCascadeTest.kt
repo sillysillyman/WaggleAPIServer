@@ -1,5 +1,6 @@
 package io.waggle.waggleapiserver.domain.comment.service
 
+import io.waggle.waggleapiserver.domain.like.LikeType
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.support.CascadeIntegrationTestSupport
 import org.assertj.core.api.Assertions.assertThat
@@ -105,5 +106,33 @@ class CommentServiceCascadeTest : CascadeIntegrationTestSupport() {
         assertThat(
             count("SELECT COUNT(*) FROM comments WHERE id = ? AND deleted_at IS NULL", survivor.id),
         ).isEqualTo(1L)
+    }
+
+    @Test
+    fun `deleteComment는 삭제와 tombstone 모두에서 좋아요를 정리하고 형제 댓글은 보존한다`() {
+        val author = createUser("author")
+        val replier = createUser("replier")
+        val liker = createUser("liker")
+        val team = createTeam(author.id)
+        val post = createPost(author.id, team.id)
+
+        val tombstoned = createComment(post.id, author.id)
+        createComment(post.id, replier.id, parentId = tombstoned.id)
+        val standalone = createComment(post.id, author.id)
+        val survivor = createComment(post.id, replier.id)
+
+        createLike(liker.id, LikeType.COMMENT, tombstoned.id)
+        createLike(liker.id, LikeType.COMMENT, standalone.id)
+        createLike(liker.id, LikeType.COMMENT, survivor.id)
+
+        commentService.deleteComment(tombstoned.id, author) // 답글이 있어 tombstone
+        commentService.deleteComment(standalone.id, author) // 답글이 없어 soft delete
+
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", tombstoned.id))
+            .isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", standalone.id))
+            .isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", survivor.id))
+            .isEqualTo(1L)
     }
 }

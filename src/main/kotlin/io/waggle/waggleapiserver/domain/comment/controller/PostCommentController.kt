@@ -42,5 +42,6 @@ class PostCommentController(
     fun getComments(
         @PathVariable postId: Long,
         @Valid @ParameterObject cursorQuery: CursorGetQuery,
-    ): CursorResponse<CommentResponse> = commentService.getComments(postId, cursorQuery)
+        @CurrentUser user: User?,
+    ): CursorResponse<CommentResponse> = commentService.getComments(postId, cursorQuery, user)
 }

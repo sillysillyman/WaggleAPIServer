@@ -9,6 +9,9 @@ import io.waggle.waggleapiserver.common.storage.dto.request.PresignedUrlRequest
 import io.waggle.waggleapiserver.common.storage.dto.response.PresignedUrlResponse
 import io.waggle.waggleapiserver.domain.application.repository.ApplicationRepository
 import io.waggle.waggleapiserver.domain.comment.repository.CommentRepository
+import io.waggle.waggleapiserver.domain.like.LikeId
+import io.waggle.waggleapiserver.domain.like.LikeType
+import io.waggle.waggleapiserver.domain.like.repository.LikeRepository
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.post.Post
@@ -44,6 +47,7 @@ class PostService(
     private val storageClient: StorageClient,
     private val applicationRepository: ApplicationRepository,
     private val commentRepository: CommentRepository,
+    private val likeRepository: LikeRepository,
     private val memberRepository: MemberRepository,
     private val postRepository: PostRepository,
     private val recruitmentRepository: RecruitmentRepository,
@@ -118,6 +122,7 @@ class PostService(
     fun getPosts(
         query: PostGetQuery,
         cursorQuery: CursorGetQuery,
+        user: User?,
     ): CursorResponse<PostSimpleResponse> {
         val direction =
             when (query.sort) {
@@ -154,6 +159,23 @@ class PostService(
                     .associate { it.postId to it.commentCount }
             }
 
+        val likeCountByPostId =
+            if (postIds.isEmpty()) {
+                emptyMap()
+            } else {
+                likeRepository
+                    .countLikesGroupByTargetId(LikeType.POST, postIds)
+                    .associate { it.targetId to it.likeCount }
+            }
+        val likedPostIdSet =
+            if (user == null || postIds.isEmpty()) {
+                emptySet()
+            } else {
+                likeRepository
+                    .findTargetIdsByUserIdAndTypeAndTargetIdIn(user.id, LikeType.POST, postIds)
+                    .toSet()
+            }
+
         val data =
             content.map { post ->
                 val author =
@@ -172,6 +194,8 @@ class PostService(
                     UserSimpleResponse.from(author),
                     recruitments,
                     commentCountByPostId[post.id] ?: 0,
+                    likeCountByPostId[post.id] ?: 0,
+                    post.id in likedPostIdSet,
                 )
             }
 
@@ -217,6 +241,8 @@ class PostService(
             TeamResponse.of(team, memberCount, memberRole),
             recruitments,
             commentRepository.countByPostId(postId),
+            likeRepository.countByIdTypeAndIdTargetId(LikeType.POST, postId),
+            user?.let { likeRepository.existsById(LikeId(LikeType.POST, postId, it.id)) } ?: false,
             applicationStatus,
         )
     }
@@ -353,6 +379,8 @@ class PostService(
             TeamResponse.of(team, memberCount, member.role),
             savedRecruitments.map { RecruitmentResponse.from(it) },
             commentCount = commentRepository.countByPostId(postId),
+            likeCount = likeRepository.countByIdTypeAndIdTargetId(LikeType.POST, postId),
+            liked = likeRepository.existsById(LikeId(LikeType.POST, postId, user.id)),
         )
     }
 

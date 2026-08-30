@@ -21,6 +21,10 @@ data class CommentResponse(
     val user: UserSimpleResponse?,
     @Schema(description = "삭제된 댓글 여부 — true면 '삭제된 댓글입니다'로 렌더링")
     val tombstoned: Boolean,
+    @Schema(description = "좋아요 수 (삭제된 댓글이면 항상 0)", example = "42")
+    val likeCount: Long,
+    @Schema(description = "현재 사용자의 좋아요 여부 (비로그인이면 false)", example = "true")
+    val liked: Boolean,
     @Schema(description = "답글 목록 (답글 자신은 항상 빈 목록)")
     val replies: List<CommentResponse>,
     @Schema(description = "댓글 생성일시", example = "2025-11-16T12:30:45.123456Z")
@@ -34,18 +38,29 @@ data class CommentResponse(
             root: Comment,
             replies: List<Comment>,
             userById: Map<UUID, User>,
+            likeCountByCommentId: Map<Long, Long> = emptyMap(),
+            likedCommentIdSet: Set<Long> = emptySet(),
         ): CommentResponse =
             of(
                 root,
                 userById[root.userId]?.let { UserSimpleResponse.from(it) },
+                likeCountByCommentId[root.id] ?: 0,
+                root.id in likedCommentIdSet,
                 replies.map { reply ->
-                    of(reply, userById[reply.userId]?.let { UserSimpleResponse.from(it) })
+                    of(
+                        reply,
+                        userById[reply.userId]?.let { UserSimpleResponse.from(it) },
+                        likeCountByCommentId[reply.id] ?: 0,
+                        reply.id in likedCommentIdSet,
+                    )
                 },
             )
 
         fun of(
             comment: Comment,
             user: UserSimpleResponse?,
+            likeCount: Long = 0,
+            liked: Boolean = false,
             replies: List<CommentResponse> = emptyList(),
         ): CommentResponse =
             CommentResponse(
@@ -55,6 +70,8 @@ data class CommentResponse(
                 content = if (comment.isTombstoned) null else comment.content,
                 user = if (comment.isTombstoned) null else user,
                 tombstoned = comment.isTombstoned,
+                likeCount = likeCount,
+                liked = liked,
                 replies = replies,
                 createdAt = comment.createdAt,
                 updatedAt = comment.updatedAt,
