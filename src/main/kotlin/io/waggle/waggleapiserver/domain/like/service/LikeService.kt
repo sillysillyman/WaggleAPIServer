@@ -28,13 +28,15 @@ class LikeService(
     ): LikeResponse {
         checkTargetExists(type, targetId)
 
-        // 이미 눌린 상태면 INSERT 생략. save()를 무조건 부르면 merge가 일어나 created_at이 갱신됨.
         val likeId = LikeId(type = type, targetId = targetId, userId = user.id)
         if (!likeRepository.existsById(likeId)) {
             likeRepository.save(Like(likeId))
         }
 
-        return LikeResponse.of(true, likeRepository.countByIdTypeAndIdTargetId(type, targetId))
+        return LikeResponse.of(
+            liked = true,
+            likeCount = likeRepository.countByIdTypeAndIdTargetId(type, targetId),
+        )
     }
 
     @Transactional
@@ -47,10 +49,13 @@ class LikeService(
 
         likeRepository.deleteById(LikeId(type = type, targetId = targetId, userId = user.id))
 
-        return LikeResponse.of(false, likeRepository.countByIdTypeAndIdTargetId(type, targetId))
+        return LikeResponse.of(
+            liked = false,
+            likeCount = likeRepository.countByIdTypeAndIdTargetId(type, targetId),
+        )
     }
 
-    // existsById는 count 쿼리라 soft delete 필터가 적용됨. findByIdOrNull(em.find)은 필터를 타지 않아 사용 불가.
+    // tombstone은 soft delete가 아니라 @SQLRestriction에 안 걸리므로 조건을 명시함.
     private fun checkTargetExists(
         type: LikeType,
         targetId: Long,
