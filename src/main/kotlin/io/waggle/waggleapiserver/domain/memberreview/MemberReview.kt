@@ -19,9 +19,11 @@ import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
+import org.hibernate.annotations.SQLRestriction
 import java.util.UUID
 
 @Entity
+@SQLRestriction("deleted_at IS NULL")
 @Table(
     name = "member_reviews",
     uniqueConstraints = [

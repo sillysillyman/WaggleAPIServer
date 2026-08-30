@@ -18,9 +18,11 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
+import org.hibernate.annotations.SQLRestriction
 import java.util.UUID
 
 @Entity
+@SQLRestriction("deleted_at IS NULL")
 @Table(
     name = "applications",
     indexes = [
