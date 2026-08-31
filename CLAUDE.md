@@ -127,6 +127,17 @@
   // 1-depth이므로 재귀가 필요 없다. depth를 늘릴 때 while 루프가 된다.  ✗
   // 1-depth이므로 재귀 불필요. depth 확장 시 while 루프가 됨.           ✓
   ```
+- **검증 함수 네이밍**: 조건을 어기면 던지는 함수는 `check*`, `Boolean`을 반환하면 `is*`로 쓸 것.
+  - `check*`의 뒷부분은 **명사구·형용사구**로 둘 것. `checkTargetExists`처럼 술어문이면 `Boolean`을 반환할 것처럼 읽힌다 (`checkOwnership`, `checkMemberRole`, `checkCompleted`, `checkProfileComplete`, `checkAllRequiredAgreed` 전례).
+  - 이름이 실제 검사 범위를 담게 할 것. 좋아요 대상 검증은 존재뿐 아니라 soft delete·tombstone까지 막으므로 `checkLikableTarget`이다.
+- **boolean 리터럴 인자는 named argument로 넘길 것.** 호출부에서 `true`만 봐선 무엇을 뜻하는지 알 수 없다.
+
+  ```kotlin
+  LikeResponse.of(true, count)                  // ✗
+  LikeResponse.of(liked = true, likeCount = …)  // ✓
+  ```
+
+  - 반대로 **변수명이 파라미터명과 같으면 positional로 둘 것.** `LikeId(type = type, targetId = targetId)`는 순수한 중복이다.
 - **변수명에 줄임말 사용 금지** (msg/conv/etc). full name(`message`, `conversation`)을 쓸 것. 프로덕션·테스트 모두 적용.
 - **컬렉션 변수 네이밍**:
   - `List<T>` → `applicationIds`, `members` (복수형 `-s/-es/-ies`)
