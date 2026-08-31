@@ -20,6 +20,10 @@ data class TeamPostSimpleResponse(
     val recruiting: Boolean,
     @Schema(description = "모집 정보 목록")
     val recruitments: List<RecruitmentResponse>,
+    @Schema(description = "댓글 수 (삭제된 댓글 제외)", example = "3")
+    val commentCount: Long,
+    @Schema(description = "조회 수", example = "1024")
+    val viewCount: Long,
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(description = "지원자 수 (팀 멤버만 조회 가능)")
     val applicantCount: Int? = null,
@@ -34,6 +38,8 @@ data class TeamPostSimpleResponse(
             post: Post,
             user: UserSimpleResponse,
             recruitments: List<RecruitmentResponse> = emptyList(),
+            commentCount: Long = 0,
+            viewCount: Long = 0,
             applicantCount: Int? = null,
             unreadApplicationCount: Int? = null,
         ): TeamPostSimpleResponse =
@@ -43,6 +49,8 @@ data class TeamPostSimpleResponse(
                 user = user,
                 recruiting = recruitments.any { it.status == RecruitmentStatus.RECRUITING },
                 recruitments = recruitments,
+                commentCount = commentCount,
+                viewCount = viewCount,
                 applicantCount = applicantCount,
                 unreadApplicationCount = unreadApplicationCount,
                 createdAt = post.createdAt,

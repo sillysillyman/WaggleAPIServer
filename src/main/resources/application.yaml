@@ -37,6 +37,12 @@ spring:
   application:
     name: WaggleAPIServer
 
+  data:
+    redis:
+      # 조회수 집계가 GET /posts를 타므로 Redis 무응답이 요청 스레드를 잡아두지 않게 끊음
+      # 미설정 시 Lettuce 기본값 60초라 스레드 고갈로 전체 API가 멈춤. 루프백 왕복은 1ms 미만
+      timeout: 1s
+
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -59,6 +65,13 @@ spring:
 
   lifecycle:
     timeout-per-shutdown-phase: 30s
+
+  task:
+    scheduling:
+      shutdown:
+        # 조회수 flush는 Redis에서 증분을 지운 뒤 DB에 반영하므로 중간에 잘리면 복구 불가
+        await-termination: true
+        await-termination-period: 10s
 
   security:
     oauth2:

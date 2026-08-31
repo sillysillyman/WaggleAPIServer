@@ -38,6 +38,10 @@ class Post(
     val teamId: Long,
 ) : AuditingEntity(),
     Bookmarkable {
+    // 스케줄러의 native UPDATE만 이 컬럼을 씀
+    @Column(name = "view_count", nullable = false, insertable = false, updatable = false)
+    val viewCount: Long = 0
+
     override val targetId: Long
         get() = id
     override val type: BookmarkType
