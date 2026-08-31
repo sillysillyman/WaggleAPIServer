@@ -21,10 +21,13 @@ class LikeServiceTest : CascadeIntegrationTestSupport() {
         val first = likeService.like(LikeType.POST, post.id, liker)
         val second = likeService.like(LikeType.POST, post.id, liker)
 
-        assertThat(first.liked).isTrue()
-        assertThat(first.likeCount).isEqualTo(1L)
-        assertThat(second.liked).isTrue()
-        assertThat(second.likeCount).isEqualTo(1L)
+        // created는 PUT의 201/200을 가름 — 최초만 true.
+        assertThat(first.created).isTrue()
+        assertThat(first.response.liked).isTrue()
+        assertThat(first.response.likeCount).isEqualTo(1L)
+        assertThat(second.created).isFalse()
+        assertThat(second.response.liked).isTrue()
+        assertThat(second.response.likeCount).isEqualTo(1L)
         assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'POST' AND target_id = ?", post.id))
             .isEqualTo(1L)
     }
@@ -59,9 +62,9 @@ class LikeServiceTest : CascadeIntegrationTestSupport() {
         val reply = createComment(post.id, author.id, parentId = root.id)
 
         likeService.like(LikeType.COMMENT, root.id, liker)
-        val replyResponse = likeService.like(LikeType.COMMENT, reply.id, author)
+        val replyResult = likeService.like(LikeType.COMMENT, reply.id, author)
 
-        assertThat(replyResponse.likeCount).isEqualTo(1L)
+        assertThat(replyResult.response.likeCount).isEqualTo(1L)
         assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT'")).isEqualTo(2L)
     }
 

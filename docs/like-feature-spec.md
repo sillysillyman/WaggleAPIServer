@@ -30,15 +30,25 @@ DELETE /comments/{commentId}/like  CommentLikeController
 
 두 컨트롤러 모두 `domain/like/controller/`에 두고 **같은 `@Tag(name = "좋아요")`** 를 준다 (CLAUDE.md §1, §3). 부모 컨트롤러에 얹으면 Swagger에서 "모집글"·"댓글" 태그로 쪼개진다.
 
-응답은 두 메서드 모두 `200 LikeResponse`.
+본문은 네 메서드 모두 `LikeResponse`이고, 상태 코드만 갈린다.
 
-```json
-{ "liked": true, "likeCount": 42 }
-```
+| 요청 | 상태 | 본문 |
+|---|---|---|
+| `PUT` — 좋아요가 없던 상태 | **201 Created** | `{ "liked": true, "likeCount": 42 }` |
+| `PUT` — 이미 좋아요한 상태 | **200 OK** | `{ "liked": true, "likeCount": 42 }` |
+| `DELETE` | **200 OK** | `{ "liked": false, "likeCount": 41 }` |
 
-### 2.2 `204`가 아니라 `200`에 본문을 싣는 이유
+### 2.2 상태 코드를 `201`/`200`으로 가르는 이유
 
-클라이언트가 카운트를 재조회 없이 갱신할 수 있다. 멱등성은 유지된다 — `PUT`을 두 번 보내면 두 번 다 같은 `{liked: true, likeCount: 42}`가 나온다.
+RFC 9110 §9.3.4는 `PUT`이 없던 리소스를 생성하면 원 서버가 **201**로, 기존 표현을 대체했으면 200이나 204로 응답하도록 정한다. 201은 `POST` 전용이 아니다 — §15.3.2의 정의도 "새 리소스가 생성됨"일 뿐 메서드를 가리지 않는다.
+
+`PUT`을 고른 근거 자체가 메서드 의미론(2.3)이므로, 같은 명세의 상태 코드 규칙만 무시하면 앞뒤가 맞지 않는다. 비용도 작다 — 서비스가 멱등 처리를 위해 이미 `existsById`로 생성 여부를 알고 있어 그 값을 위로 올리기만 하면 된다 (6장 `LikeResult`).
+
+**멱등성은 그대로다.** 멱등성은 *결과 상태*가 같음을 뜻하지 응답이 바이트 단위로 같아야 한다는 뜻이 아니다. `PUT`을 두 번 보내면 상태도 본문도 동일하고 상태 코드만 201 → 200으로 바뀐다.
+
+### 2.2.1 `204`를 쓰지 않는 이유
+
+구조가 같은 GitHub star API(`PUT`/`DELETE /user/starred/{owner}/{repo}`)는 둘 다 **204 No Content**를 준다. 우리가 본문을 싣는 것은 `likeCount`를 함께 돌려줘 클라이언트의 재조회를 없애기 위해서다. 이 API의 실질 가치가 거기 있으므로 204는 채택하지 않는다.
 
 ### 2.3 토글 `POST`를 쓰지 않는 이유
 
@@ -239,6 +249,8 @@ fun existsByIdAndTombstonedAtIsNull(id: Long): Boolean
 
 ## 6. 서비스 — `domain/like/service/LikeService.kt`
 
+타입별 위임 메서드(`likePost`/`likeComment` …)는 두지 않는다. 이름만 바꿔 넘기는 층이라 값을 못 하므로 `LikeType`을 컨트롤러가 직접 넘긴다.
+
 ```kotlin
 @Service
 @Transactional(readOnly = true)
@@ -248,35 +260,38 @@ class LikeService(
     private val postRepository: PostRepository,
 ) {
     @Transactional
-    fun likePost(postId: Long, user: User): LikeResponse = like(LikeType.POST, postId, user)
-
-    @Transactional
-    fun unlikePost(postId: Long, user: User): LikeResponse = unlike(LikeType.POST, postId, user)
-
-    @Transactional
-    fun likeComment(commentId: Long, user: User): LikeResponse = like(LikeType.COMMENT, commentId, user)
-
-    @Transactional
-    fun unlikeComment(commentId: Long, user: User): LikeResponse = unlike(LikeType.COMMENT, commentId, user)
-
-    private fun like(type: LikeType, targetId: Long, user: User): LikeResponse {
+    fun like(type: LikeType, targetId: Long, user: User): LikeResult {
         checkTargetExists(type, targetId)
 
+        // 이미 눌린 상태면 INSERT 생략. created는 PUT의 201/200을 가르는 데만 쓰임.
         val likeId = LikeId(type = type, targetId = targetId, userId = user.id)
-        // 이미 눌린 상태면 INSERT 생략. save()를 무조건 부르면 merge가 일어나 created_at이 흔들림.
-        if (!likeRepository.existsById(likeId)) {
+        val created = !likeRepository.existsById(likeId)
+        if (created) {
             likeRepository.save(Like(likeId))
         }
-        return LikeResponse.of(true, likeRepository.countByIdTypeAndIdTargetId(type, targetId))
+
+        return LikeResult(
+            created = created,
+            response = LikeResponse.of(
+                liked = true,
+                likeCount = likeRepository.countByIdTypeAndIdTargetId(type, targetId),
+            ),
+        )
     }
 
-    private fun unlike(type: LikeType, targetId: Long, user: User): LikeResponse {
+    @Transactional
+    fun unlike(type: LikeType, targetId: Long, user: User): LikeResponse {
         checkTargetExists(type, targetId)
 
         likeRepository.deleteById(LikeId(type = type, targetId = targetId, userId = user.id))
-        return LikeResponse.of(false, likeRepository.countByIdTypeAndIdTargetId(type, targetId))
+
+        return LikeResponse.of(
+            liked = false,
+            likeCount = likeRepository.countByIdTypeAndIdTargetId(type, targetId),
+        )
     }
 
+    // tombstone은 soft delete가 아니라 @SQLRestriction에 안 걸리므로 조건을 명시함.
     private fun checkTargetExists(type: LikeType, targetId: Long) {
         val exists =
             when (type) {
@@ -289,6 +304,29 @@ class LikeService(
     }
 }
 ```
+
+`LikeResult`는 서비스 계층 전용 타입이다 (`domain/like/service/LikeResult.kt`). 응답 본문에는 나가지 않고 컨트롤러가 상태 코드를 고르는 데만 쓴다.
+
+```kotlin
+data class LikeResult(
+    val created: Boolean,
+    val response: LikeResponse,
+)
+```
+
+컨트롤러는 이 값으로 201/200을 가른다. `DELETE`는 생성 개념이 없어 `LikeResponse`를 그대로 반환한다 (항상 200).
+
+```kotlin
+@PutMapping
+fun likePost(@PathVariable postId: Long, @CurrentUser user: User): ResponseEntity<LikeResponse> {
+    val result = likeService.like(LikeType.POST, postId, user)
+    return ResponseEntity
+        .status(if (result.created) HttpStatus.CREATED else HttpStatus.OK)
+        .body(result.response)
+}
+```
+
+두 상태 코드는 `@Operation(description = ...)`으로 문서화한다. 코드베이스에 `@ApiResponse` 사용 전례가 없어 새 애너테이션 패턴을 도입하지 않았고, 스키마 유실 위험도 피했다.
 
 ### 6.1 대상 존재 검증
 
@@ -518,32 +556,46 @@ gh pr create --repo Team-Waggle/WaggleAPIServer --base main --head sillysillyman
 
 ### 11.1 커밋 분할
 
+`upstream/main` 위에 쌓인 실제 순서는 다음과 같다.
+
 ```
 docs(like): fork 기반 리모트·PR 전략 성문화
   - CLAUDE.md §8에 upstream/origin 역할과 파생·PR 절차 추가
 
 feat(like): 댓글 삭제 이벤트 신설
-  - CommentDeletedEvent 추가
-  - deleteComment의 tombstone·delete 양 분기에서 발행
+  - CommentDeletedEvent 추가, deleteComment에서 분기 이전에 한 번 발행
 
 feat(like): 좋아요 도메인 추가
   - V25__create_likes.sql, Like/LikeId/LikeType
   - LikeRepository, LikeService, LikeResponse
-  - PostLikeController, CommentLikeController
-  - LikeCascadeListener
-  - 서비스·cascade 통합 테스트, 본 설계 문서
+  - PostLikeController, CommentLikeController, LikeCascadeListener
+  - CommentRepository.existsByIdAndTombstonedAtIsNull
+  - 본 설계 문서
+
+chore(like): gradlew 실행 권한을 저장소에 반영
+  - 파일 모드 100755 커밋 (11.4)
+
+refactor(like): 좋아요 서비스 주석·인자 정리
+  - named argument 적용, @SQLRestriction 전환에 맞춰 주석 갱신
 
 feat(like): 모집글·댓글 응답에 좋아요 수·여부 노출
   - PostDetailResponse, PostSimpleResponse, CommentResponse에 필드 추가
   - getPosts, getComments에 @CurrentUser user: User? 추가
   - BookmarkService.getUserBookmarkables 배치 조회 반영
+  - LikeServiceTest 및 cascade 테스트 4종
+
+docs(like): soft delete 서술을 @SQLRestriction 전환에 맞게 갱신
+  - PR #140으로 @Filter가 걷히면서 무효가 된 5장·6.1 서술 교체
+
+feat(like): 좋아요 PUT을 201/200으로 구분
+  - LikeResult 도입, 컨트롤러가 ResponseEntity로 상태 코드 결정 (2.2)
 ```
 
 앞의 두 커밋은 좋아요 도메인 밖의 변경이라 **맨 앞에 독립적으로** 둔다. PR #138이 username 검증을 댓글 PR 맨 앞 독립 커밋으로 넣은 것과 같은 처리다.
 
 `CommentDeletedEvent`를 발행만 하고 리스너가 없는 상태가 한 커밋 동안 존재하지만, 이벤트 발행은 구독자가 없으면 no-op이라 그 시점에도 동작이 깨지지 않는다.
 
-**테스트와 설계 문서는 도메인 커밋에 동봉한다.** 별도 `test(...)` 커밋으로 떼지 않는다 (PR #138의 `d788370`이 마이그레이션·도메인·cascade·테스트·설계 문서를 한 커밋에 담은 전례).
+**테스트는 별도 `test(...)` 커밋으로 떼지 않는다** (PR #138의 `d788370` 전례). 다만 실제로는 도메인 커밋이 아니라 응답 노출 커밋에 함께 들어갔다 — 테스트가 응답 필드까지 검증하기 때문이다.
 
 ### 11.2 PR
 
@@ -563,9 +615,19 @@ PR에는 `lint.yml`의 `./gradlew spotlessCheck`만 돈다. **테스트는 CI에
 
 `./gradlew spotlessApply`를 작업 완료 시점에 한 번 실행한다 (CLAUDE.md §6). 누락하면 lint가 실패한다.
 
-### 11.4 `gradlew` 주의
+### 11.4 `gradlew` 실행 권한
 
-워킹트리의 `gradlew` 변경은 **mode change(`100644` → `100755`)뿐이고 내용 변경이 없다.** 저장소 정본이 `100644`이고 CI가 매번 `chmod +x gradlew`를 하는 구조이므로 이 변경을 커밋에 섞지 않는다. `core.fileMode`가 `true`라 diff에 계속 노출되니 파일을 명시적으로 stage하고 `git commit -a`를 쓰지 않는다.
+`gradlew`가 저장소에 `100644`(비실행)로 들어 있어 클론한 환경마다 `chmod +x`를 반복해야 했고, 그 mode 변경이 워킹트리에 상시 노출됐다. **파일 모드를 `100755`로 커밋해 해소한다** (내용 변경은 없다).
+
+CI의 `chmod +x gradlew`는 **그대로 둔다.** 한 번은 제거했다가 되돌렸는데, 이유는 **fine-grained PAT로 `.github/workflows/` 변경을 push하려면 `Workflows: Read and write` 권한이 따로 필요하기 때문이다.**
+
+```
+! [remote rejected] feat/like -> feat/like
+  (refusing to allow a Personal Access Token to create or update workflow
+   `.github/workflows/deploy.yml` without `workflow` scope)
+```
+
+이미 실행 가능한 파일에 `chmod`를 한 번 더 하는 것은 무해한 no-op이라 제거의 이득이 작다. 반면 그 권한을 토큰에 부여하면 유출 시 CI 워크플로 변조 경로가 열린다. 워크플로 정리가 필요해지면 GitHub 웹 UI에서 직접 편집하면 PAT 제약을 타지 않는다.
 
 ## 부록 — 좋아요 알림 (구현하지 않음)
 

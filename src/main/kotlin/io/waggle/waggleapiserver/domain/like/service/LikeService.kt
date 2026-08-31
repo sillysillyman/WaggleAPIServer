@@ -25,17 +25,23 @@ class LikeService(
         type: LikeType,
         targetId: Long,
         user: User,
-    ): LikeResponse {
+    ): LikeResult {
         checkTargetExists(type, targetId)
 
+        // 이미 눌린 상태면 INSERT 생략. created는 PUT의 201/200을 가르는 데만 쓰임.
         val likeId = LikeId(type = type, targetId = targetId, userId = user.id)
-        if (!likeRepository.existsById(likeId)) {
+        val created = !likeRepository.existsById(likeId)
+        if (created) {
             likeRepository.save(Like(likeId))
         }
 
-        return LikeResponse.of(
-            liked = true,
-            likeCount = likeRepository.countByIdTypeAndIdTargetId(type, targetId),
+        return LikeResult(
+            created = created,
+            response =
+                LikeResponse.of(
+                    liked = true,
+                    likeCount = likeRepository.countByIdTypeAndIdTargetId(type, targetId),
+                ),
         )
     }
 
