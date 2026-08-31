@@ -1,6 +1,7 @@
 package io.waggle.waggleapiserver.domain.team.service
 
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
+import io.waggle.waggleapiserver.domain.like.LikeType
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.notification.NotificationType
 import io.waggle.waggleapiserver.support.CascadeIntegrationTestSupport
@@ -60,5 +61,30 @@ class TeamServiceCascadeTest : CascadeIntegrationTestSupport() {
         assertThat(count("SELECT COUNT(*) FROM posts WHERE team_id = ? AND deleted_at IS NULL", otherTeam.id))
             .isEqualTo(1L)
         assertThat(count("SELECT COUNT(*) FROM notifications WHERE team_id = ?", otherTeam.id)).isEqualTo(1L)
+    }
+
+    @Test
+    fun `deleteTeam은 팀 산하 글과 댓글의 좋아요를 정리한다`() {
+        val leader = createUser("leader")
+        val liker = createUser("liker")
+        val team = createTeam(leader.id)
+        createMember(leader.id, team.id, MemberRole.LEADER)
+        val post = createPost(leader.id, team.id)
+        val comment = createComment(post.id, leader.id)
+
+        val otherTeam = createTeam(liker.id)
+        val otherPost = createPost(liker.id, otherTeam.id)
+
+        createLike(liker.id, LikeType.POST, post.id)
+        createLike(liker.id, LikeType.COMMENT, comment.id)
+        createLike(leader.id, LikeType.POST, otherPost.id)
+
+        teamService.deleteTeam(team.id, leader)
+
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'POST' AND target_id = ?", post.id)).isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", comment.id))
+            .isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'POST' AND target_id = ?", otherPost.id))
+            .isEqualTo(1L)
     }
 }

@@ -14,6 +14,11 @@ import io.waggle.waggleapiserver.domain.comment.repository.CommentRepository
 import io.waggle.waggleapiserver.domain.comment.service.CommentService
 import io.waggle.waggleapiserver.domain.follow.Follow
 import io.waggle.waggleapiserver.domain.follow.repository.FollowRepository
+import io.waggle.waggleapiserver.domain.like.Like
+import io.waggle.waggleapiserver.domain.like.LikeId
+import io.waggle.waggleapiserver.domain.like.LikeType
+import io.waggle.waggleapiserver.domain.like.repository.LikeRepository
+import io.waggle.waggleapiserver.domain.like.service.LikeService
 import io.waggle.waggleapiserver.domain.member.Member
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
@@ -141,6 +146,12 @@ abstract class CascadeIntegrationTestSupport {
     protected lateinit var bookmarkRepository: BookmarkRepository
 
     @Autowired
+    protected lateinit var likeService: LikeService
+
+    @Autowired
+    protected lateinit var likeRepository: LikeRepository
+
+    @Autowired
     protected lateinit var notificationRepository: NotificationRepository
 
     @Autowired
@@ -160,6 +171,7 @@ abstract class CascadeIntegrationTestSupport {
                 "recruitment_skills",
                 "recruitments",
                 "bookmarks",
+                "likes",
                 "comments",
                 "notifications",
                 "posts",
@@ -288,6 +300,12 @@ abstract class CascadeIntegrationTestSupport {
         targetId: Long,
         type: BookmarkType,
     ): Bookmark = bookmarkRepository.save(Bookmark(BookmarkId(userId, targetId, type)))
+
+    protected fun createLike(
+        userId: UUID,
+        type: LikeType,
+        targetId: Long,
+    ): Like = likeRepository.save(Like(LikeId(type, targetId, userId)))
 
     protected fun createNotification(
         userId: UUID,

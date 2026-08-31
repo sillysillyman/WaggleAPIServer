@@ -58,7 +58,8 @@ class PostController(
     fun getPosts(
         @Valid @ParameterObject query: PostGetQuery,
         @Valid @ParameterObject cursorQuery: CursorGetQuery,
-    ): CursorResponse<PostSimpleResponse> = postService.getPosts(query, cursorQuery)
+        @CurrentUser user: User?,
+    ): CursorResponse<PostSimpleResponse> = postService.getPosts(query, cursorQuery, user)
 
     @AllowIncompleteSetup
     @Operation(summary = "모집글 상세 조회")

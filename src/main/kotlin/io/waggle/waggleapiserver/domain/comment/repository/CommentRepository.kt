@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Query
 import java.util.UUID
 
 interface CommentRepository : JpaRepository<Comment, Long> {
+    fun existsByIdAndTombstonedAtIsNull(id: Long): Boolean
+
     fun existsByPostIdAndParentId(
         postId: Long,
         parentId: Long,

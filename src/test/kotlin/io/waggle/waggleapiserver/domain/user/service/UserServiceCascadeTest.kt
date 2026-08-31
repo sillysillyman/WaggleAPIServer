@@ -1,6 +1,7 @@
 package io.waggle.waggleapiserver.domain.user.service
 
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
+import io.waggle.waggleapiserver.domain.like.LikeType
 import io.waggle.waggleapiserver.domain.member.MemberRole
 import io.waggle.waggleapiserver.domain.notification.NotificationType
 import io.waggle.waggleapiserver.support.CascadeIntegrationTestSupport
@@ -82,5 +83,34 @@ class UserServiceCascadeTest : CascadeIntegrationTestSupport() {
         assertThat(count("SELECT COUNT(*) FROM user_term_agreements")).isZero()
         assertThat(count("SELECT COUNT(*) FROM posts WHERE deleted_at IS NULL")).isZero()
         assertThat(count("SELECT COUNT(*) FROM users WHERE deleted_at IS NULL")).isEqualTo(1L)
+    }
+
+    @Test
+    fun `deactivateUser는 누른 좋아요와 받은 좋아요를 모두 정리한다`() {
+        val user = createUser("user")
+        val other = createUser("other")
+        val otherTeam = createTeam(other.id)
+        val othersPost = createPost(other.id, otherTeam.id)
+        val ownPost = createPost(user.id, otherTeam.id)
+        val ownComment = createComment(othersPost.id, user.id)
+        val othersComment = createComment(othersPost.id, other.id)
+
+        // 탈퇴자가 누른 좋아요
+        createLike(user.id, LikeType.POST, othersPost.id)
+        // 탈퇴자의 글·댓글이 받은 좋아요
+        createLike(other.id, LikeType.POST, ownPost.id)
+        createLike(other.id, LikeType.COMMENT, ownComment.id)
+        // 무관한 좋아요 — 보존 대상
+        createLike(other.id, LikeType.COMMENT, othersComment.id)
+
+        userService.deactivateUser(user)
+
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'POST' AND target_id = ?", othersPost.id))
+            .isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'POST' AND target_id = ?", ownPost.id)).isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", ownComment.id))
+            .isZero()
+        assertThat(count("SELECT COUNT(*) FROM likes WHERE type = 'COMMENT' AND target_id = ?", othersComment.id))
+            .isEqualTo(1L)
     }
 }

@@ -8,11 +8,16 @@ import io.waggle.waggleapiserver.domain.comment.Comment
 import io.waggle.waggleapiserver.domain.comment.dto.request.CommentCreateRequest
 import io.waggle.waggleapiserver.domain.comment.dto.request.CommentUpdateRequest
 import io.waggle.waggleapiserver.domain.comment.dto.response.CommentResponse
+import io.waggle.waggleapiserver.domain.comment.event.CommentDeletedEvent
 import io.waggle.waggleapiserver.domain.comment.repository.CommentRepository
+import io.waggle.waggleapiserver.domain.like.LikeId
+import io.waggle.waggleapiserver.domain.like.LikeType
+import io.waggle.waggleapiserver.domain.like.repository.LikeRepository
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.dto.response.UserSimpleResponse
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -21,7 +26,9 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true)
 class CommentService(
+    private val eventPublisher: ApplicationEventPublisher,
     private val commentRepository: CommentRepository,
+    private val likeRepository: LikeRepository,
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
 ) {
@@ -54,6 +61,7 @@ class CommentService(
     fun getComments(
         postId: Long,
         cursorQuery: CursorGetQuery,
+        user: User?,
     ): CursorResponse<CommentResponse> {
         val roots =
             commentRepository.findRootsByPostIdWithCursor(
@@ -91,12 +99,33 @@ class CommentService(
                 )
             }
 
+        // 답글에도 좋아요가 달리므로 최상위 댓글과 답글 id 전부가 배치 조회 대상.
+        val commentIds = comments.map { it.id }
+        val likeCountByCommentId =
+            if (commentIds.isEmpty()) {
+                emptyMap()
+            } else {
+                likeRepository
+                    .countLikesGroupByTargetId(LikeType.COMMENT, commentIds)
+                    .associate { it.targetId to it.likeCount }
+            }
+        val likedCommentIdSet =
+            if (user == null || commentIds.isEmpty()) {
+                emptySet()
+            } else {
+                likeRepository
+                    .findTargetIdsByUserIdAndTypeAndTargetIdIn(user.id, LikeType.COMMENT, commentIds)
+                    .toSet()
+            }
+
         val data =
             content.map {
                 CommentResponse.of(
                     it,
                     repliesByParentId[it.id] ?: emptyList(),
                     authorById,
+                    likeCountByCommentId,
+                    likedCommentIdSet,
                 )
             }
 
@@ -122,7 +151,12 @@ class CommentService(
         comment.checkOwnership(user.id)
         comment.update(request.content)
 
-        return CommentResponse.of(comment, UserSimpleResponse.from(user))
+        return CommentResponse.of(
+            comment,
+            UserSimpleResponse.from(user),
+            likeRepository.countByIdTypeAndIdTargetId(LikeType.COMMENT, commentId),
+            likeRepository.existsById(LikeId(LikeType.COMMENT, commentId, user.id)),
+        )
     }
 
     @Transactional
@@ -137,6 +171,9 @@ class CommentService(
                     "Comment not found: $commentId",
                 )
         comment.checkOwnership(user.id)
+
+        // tombstone도 본문이 사라지므로 좋아요 정리 대상. 분기 이전에 한 번만 발행.
+        eventPublisher.publishEvent(CommentDeletedEvent(commentId))
 
         if (comment.isReply) {
             comment.delete()
