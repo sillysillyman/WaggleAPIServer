@@ -227,7 +227,7 @@ interface TargetLikeCount {
 
 native DELETE가 다섯인 이유는 **부모 삭제 이벤트 × 대상 타입** 조합이 그만큼이기 때문이다. 이 개수는 전용 테이블(`post_likes` + `comment_likes`)로 쪼개도 줄지 않는다 — 다형성으로 아낀 것은 엔티티·DTO·컨트롤러 계층이지 cascade가 아니다.
 
-native 쿼리에는 soft delete 필터가 걸리지 않는다 (CLAUDE.md §2). 여기서는 **의도한 동작**이다 — 이미 soft delete된 모집글·댓글에 남은 좋아요도 함께 지워야 한다.
+native 쿼리에는 `@SQLRestriction`이 적용되지 않는다 (CLAUDE.md §2). 여기서는 **의도한 동작**이다 — 이미 soft delete된 모집글·댓글에 남은 좋아요도 함께 지워야 한다. restriction은 끌 수 없으므로 native가 삭제된 행에 닿는 유일한 경로이기도 하다.
 
 ### 5.1 `CommentRepository`에 추가
 
@@ -235,7 +235,7 @@ native 쿼리에는 soft delete 필터가 걸리지 않는다 (CLAUDE.md §2). �
 fun existsByIdAndTombstonedAtIsNull(id: Long): Boolean
 ```
 
-파생 쿼리라 criteria로 만들어져 soft delete 필터가 적용된다. tombstone 검사까지 한 번에 한다 (6.1 참조).
+`@SQLRestriction("deleted_at IS NULL")`이 항상 적용되므로 soft delete된 댓글은 자동으로 걸러지고, 여기에 tombstone 조건을 더해 한 번에 검사한다 (6.1 참조).
 
 ## 6. 서비스 — `domain/like/service/LikeService.kt`
 
@@ -290,11 +290,13 @@ class LikeService(
 }
 ```
 
-### 6.1 `existsById`를 쓰고 `findByIdOrNull`을 쓰지 않는 이유
+### 6.1 대상 존재 검증
 
-soft delete 필터는 criteria·JPQL에는 걸리지만 `em.find`에는 걸리지 않는다. `existsById`는 count 쿼리라 필터가 적용되어 **삭제된 대상에는 좋아요를 누를 수 없다**가 보장된다. `findByIdOrNull`은 `em.find`라 이 보장이 없다.
+soft delete는 엔티티의 `@SQLRestriction("deleted_at IS NULL")`이 담당한다. 이 restriction은 `em.find()`를 포함해 native가 아닌 모든 경로에 항상 적용되므로, `existsById` 하나로 **삭제된 대상에는 좋아요를 누를 수 없다**가 보장된다.
 
-댓글은 여기에 tombstone 검사가 더 붙는다. tombstone된 댓글은 본문이 사라지고 "삭제된 댓글입니다"로만 렌더링되므로 좋아요 대상이 아니다.
+> 이 설계를 처음 쓸 때는 `@Filter` + 애스펙트 방식이라 `em.find()`(=`findByIdOrNull`)가 필터를 우회했고, 그래서 `existsById`를 골라야 할 이유가 따로 있었다. PR #140에서 `@SQLRestriction`으로 전환되며 그 함정이 사라졌다.
+
+댓글은 여기에 tombstone 검사가 더 붙는다. **tombstone은 soft delete가 아니라 `tombstoned_at`을 쓰므로 restriction에 걸리지 않아** 조건을 명시해야 한다. tombstone된 댓글은 본문이 사라지고 "삭제된 댓글입니다"로만 렌더링되므로 좋아요 대상이 아니다.
 
 ### 6.2 카운트를 변경 뒤에 조회해도 되는 이유
 
