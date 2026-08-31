@@ -118,14 +118,30 @@
 - spotless + ktlint 1.3.1 적용. **Kotlin 파일 수정을 마무리할 때마다 `./gradlew spotlessApply` 실행할 것.**
   - 컴파일 실패 상태에선 spotless도 실패하므로 컴파일 성공 후 실행.
   - 개별 Edit마다 돌리지 말고 작업(요청받은 기능/수정) 완료 시점에 한 번.
-- **주석은 명사형 종결어미로 쓸 것.** `-한다`/`-된다`/`-없다` 같은 서술형 대신 `-함`/`-됨`/`-불필요`처럼 끝낸다. Kotlin·SQL 주석 모두 해당.
+- **주석은 코드가 말할 수 없는 것만 쓸 것.** 코드·이름·호출부·인접 문서가 이미 말하는 내용을 옮겨 적지 말 것. 남길 가치가 있는 것은 대체로 넷이다.
+  - 그 선택을 하지 않았을 때 벌어지는 일, 특히 **조용히 실패하는** 것
+  - 유지되어야 하는 불변식
+  - 의도적으로 감수한 트레이드오프와 그 범위
+  - 숫자·설정값의 근거 (없으면 아무나 바꾸게 됨)
 
   ```kotlin
-  // 삭제-답글 경합으로 고아 답글이 생기는 것을 막는다.   ✗
-  // 삭제-답글 경합으로 생기는 고아 답글 방지용.            ✓
+  // 이미 눌린 상태면 INSERT 생략                    ✗ if (created) { save() } 가 그대로 말함
+  if (created) { likeRepository.save(Like(likeId)) }
+
+  // 스케줄러의 native UPDATE만 이 컬럼을 씀          ✓ 어기면 조용한 데이터 손실
+  @Column(name = "view_count", insertable = false, updatable = false)
+  ```
+
+  메서드·변수 이름으로 표현할 수 있으면 주석 대신 이름을 고칠 것. `existsByIdAndTombstonedAtIsNull`처럼 이름이 조건을 다 말하면 주석이 불필요해진다.
+- **주석은 명사형 종결어미로 쓰고 끝에 마침표를 붙이지 말 것.** `-한다`/`-된다`/`-없다` 같은 서술형 대신 `-함`/`-됨`/`-불필요`처럼 끝낸다. Kotlin·SQL·YAML 주석 모두 해당.
+
+  ```kotlin
+  // 삭제-답글 경합으로 고아 답글이 생기는 것을 막는다.   ✗ 서술형 + 마침표
+  // 삭제-답글 경합으로 생기는 고아 답글 방지용.           ✗ 마침표
+  // 삭제-답글 경합으로 생기는 고아 답글 방지용             ✓
 
   // 1-depth이므로 재귀가 필요 없다. depth를 늘릴 때 while 루프가 된다.  ✗
-  // 1-depth이므로 재귀 불필요. depth 확장 시 while 루프가 됨.           ✓
+  // 1-depth이므로 재귀 불필요. depth 확장 시 while 루프가 됨            ✓ 문장 사이 마침표는 유지
   ```
 - **검증 함수 네이밍**: 조건을 어기면 던지는 함수는 `check*`, `Boolean`을 반환하면 `is*`로 쓸 것.
   - `check*`의 뒷부분은 **명사구·형용사구**로 둘 것. `checkTargetExists`처럼 술어문이면 `Boolean`을 반환할 것처럼 읽힌다 (`checkOwnership`, `checkMemberRole`, `checkCompleted`, `checkProfileComplete`, `checkAllRequiredAgreed` 전례).
