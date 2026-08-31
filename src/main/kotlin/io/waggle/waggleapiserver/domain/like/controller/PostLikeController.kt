@@ -1,6 +1,9 @@
 package io.waggle.waggleapiserver.domain.like.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.like.LikeType
@@ -23,7 +26,18 @@ class PostLikeController(
 ) {
     @Operation(
         summary = "모집글 좋아요",
-        description = "최초 생성 시 201, 이미 좋아요한 상태면 200을 반환함",
+        responses = [
+            ApiResponse(
+                responseCode = "201",
+                description = "좋아요 생성",
+                content = [Content(schema = Schema(implementation = LikeResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "200",
+                description = "이미 좋아요한 상태",
+                content = [Content(schema = Schema(implementation = LikeResponse::class))],
+            ),
+        ],
     )
     @PutMapping
     fun likePost(
