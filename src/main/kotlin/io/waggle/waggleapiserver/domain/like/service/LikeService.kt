@@ -26,7 +26,7 @@ class LikeService(
         targetId: Long,
         user: User,
     ): LikeResult {
-        checkTargetExists(type, targetId)
+        checkLikableTarget(type, targetId)
 
         val likeId = LikeId(type, targetId, user.id)
         val created = !likeRepository.existsById(likeId)
@@ -50,7 +50,7 @@ class LikeService(
         targetId: Long,
         user: User,
     ): LikeResponse {
-        checkTargetExists(type, targetId)
+        checkLikableTarget(type, targetId)
 
         likeRepository.deleteById(LikeId(type, targetId, user.id))
 
@@ -60,7 +60,7 @@ class LikeService(
         )
     }
 
-    private fun checkTargetExists(
+    private fun checkLikableTarget(
         type: LikeType,
         targetId: Long,
     ) {

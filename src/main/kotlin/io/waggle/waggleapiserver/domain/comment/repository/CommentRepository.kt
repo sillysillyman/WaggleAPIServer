@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query
 import java.util.UUID
 
 interface CommentRepository : JpaRepository<Comment, Long> {
-    // 좋아요 대상 검증용. 파생 쿼리라 soft delete 필터가 적용되고, tombstone 검사까지 함께 처리함.
     fun existsByIdAndTombstonedAtIsNull(id: Long): Boolean
 
     fun existsByPostIdAndParentId(
