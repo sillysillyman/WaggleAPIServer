@@ -9,8 +9,6 @@ import io.waggle.waggleapiserver.domain.bookmark.dto.request.BookmarkToggleReque
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkToggleResponse
 import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
-import io.waggle.waggleapiserver.domain.like.LikeType
-import io.waggle.waggleapiserver.domain.like.repository.LikeRepository
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
 import io.waggle.waggleapiserver.domain.post.dto.response.BookmarkedPostResponse
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
@@ -28,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class BookmarkService(
     private val bookmarkRepository: BookmarkRepository,
-    private val likeRepository: LikeRepository,
     private val memberRepository: MemberRepository,
     private val postRepository: PostRepository,
     private val recruitmentRepository: RecruitmentRepository,
@@ -76,23 +73,6 @@ class BookmarkService(
                 val recruitmentsByPostId =
                     recruitmentRepository.findByPostIdIn(postIds).groupBy { it.postId }
 
-                val likeCountByPostId =
-                    if (postIds.isEmpty()) {
-                        emptyMap()
-                    } else {
-                        likeRepository
-                            .countLikesGroupByTargetId(LikeType.POST, postIds)
-                            .associate { it.targetId to it.likeCount }
-                    }
-                val likedPostIdSet =
-                    if (postIds.isEmpty()) {
-                        emptySet()
-                    } else {
-                        likeRepository
-                            .findTargetIdsByUserIdAndTypeAndTargetIdIn(user.id, LikeType.POST, postIds)
-                            .toSet()
-                    }
-
                 posts.map { post ->
                     val author =
                         authorById[post.userId]
@@ -109,8 +89,6 @@ class BookmarkService(
                         post,
                         UserSimpleResponse.from(author),
                         recruitments,
-                        likeCount = likeCountByPostId[post.id] ?: 0,
-                        liked = post.id in likedPostIdSet,
                     )
                 }
             }

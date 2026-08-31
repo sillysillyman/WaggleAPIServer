@@ -45,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional
 class PostService(
     private val eventPublisher: ApplicationEventPublisher,
     private val storageClient: StorageClient,
+    private val postViewService: PostViewService,
     private val applicationRepository: ApplicationRepository,
     private val commentRepository: CommentRepository,
     private val likeRepository: LikeRepository,
@@ -158,6 +159,7 @@ class PostService(
                     .countCommentsGroupByPostId(postIds)
                     .associate { it.postId to it.commentCount }
             }
+        val pendingViewCountByPostId = postViewService.getPendingViewCountByPostId(postIds)
 
         val likeCountByPostId =
             if (postIds.isEmpty()) {
@@ -194,6 +196,7 @@ class PostService(
                     UserSimpleResponse.from(author),
                     recruitments,
                     commentCountByPostId[post.id] ?: 0,
+                    post.viewCount + (pendingViewCountByPostId[post.id] ?: 0),
                     likeCountByPostId[post.id] ?: 0,
                     post.id in likedPostIdSet,
                 )
@@ -228,6 +231,8 @@ class PostService(
         val recruitments =
             recruitmentRepository.findByPostId(postId).map { RecruitmentResponse.from(it) }
 
+        val pendingViewCount = postViewService.incrementViewCount(postId)
+
         val memberCount = memberRepository.countByTeamId(team.id)
 
         val memberRole =
@@ -241,6 +246,7 @@ class PostService(
             TeamResponse.of(team, memberCount, memberRole),
             recruitments,
             commentRepository.countByPostId(postId),
+            post.viewCount + pendingViewCount,
             likeRepository.countByIdTypeAndIdTargetId(LikeType.POST, postId),
             user?.let { likeRepository.existsById(LikeId(LikeType.POST, postId, it.id)) } ?: false,
             applicationStatus,
@@ -259,6 +265,16 @@ class PostService(
         val postIds = posts.map { it.id }
         val recruitmentsByPostId =
             recruitmentRepository.findByPostIdIn(postIds).groupBy { it.postId }
+
+        val commentCountByPostId =
+            if (postIds.isEmpty()) {
+                emptyMap()
+            } else {
+                commentRepository
+                    .countCommentsGroupByPostId(postIds)
+                    .associate { it.postId to it.commentCount }
+            }
+        val pendingViewCountByPostId = postViewService.getPendingViewCountByPostId(postIds)
 
         val isMember =
             user?.let { memberRepository.existsByUserIdAndTeamId(it.id, teamId) } ?: false
@@ -303,6 +319,8 @@ class PostService(
                 post,
                 UserSimpleResponse.from(author),
                 recruitments,
+                commentCountByPostId[post.id] ?: 0,
+                post.viewCount + (pendingViewCountByPostId[post.id] ?: 0),
                 applicantCount,
                 unreadApplicationCount,
             )
@@ -379,6 +397,7 @@ class PostService(
             TeamResponse.of(team, memberCount, member.role),
             savedRecruitments.map { RecruitmentResponse.from(it) },
             commentCount = commentRepository.countByPostId(postId),
+            viewCount = post.viewCount + postViewService.getPendingViewCount(postId),
             likeCount = likeRepository.countByIdTypeAndIdTargetId(LikeType.POST, postId),
             liked = likeRepository.existsById(LikeId(LikeType.POST, postId, user.id)),
         )
