@@ -10,7 +10,7 @@ import io.waggle.waggleapiserver.common.infrastructure.persistence.CurrentUser
 import io.waggle.waggleapiserver.domain.bookmark.BookmarkType
 import io.waggle.waggleapiserver.domain.bookmark.dto.response.BookmarkResponse
 import io.waggle.waggleapiserver.domain.bookmark.service.BookmarkService
-import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.BookmarkedPostResponse
 import io.waggle.waggleapiserver.domain.team.dto.response.TeamResponse
 import io.waggle.waggleapiserver.domain.user.User
 import org.springframework.web.bind.annotation.GetMapping
@@ -31,7 +31,10 @@ class UserBookmarkController(
                 responseCode = "200",
                 content = [
                     Content(
-                        array = ArraySchema(schema = Schema(oneOf = [PostSimpleResponse::class, TeamResponse::class])),
+                        array =
+                            ArraySchema(
+                                schema = Schema(oneOf = [BookmarkedPostResponse::class, TeamResponse::class]),
+                            ),
                     ),
                 ],
             ),

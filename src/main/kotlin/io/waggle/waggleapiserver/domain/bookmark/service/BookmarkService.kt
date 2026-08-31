@@ -12,7 +12,7 @@ import io.waggle.waggleapiserver.domain.bookmark.repository.BookmarkRepository
 import io.waggle.waggleapiserver.domain.like.LikeType
 import io.waggle.waggleapiserver.domain.like.repository.LikeRepository
 import io.waggle.waggleapiserver.domain.member.repository.MemberRepository
-import io.waggle.waggleapiserver.domain.post.dto.response.PostSimpleResponse
+import io.waggle.waggleapiserver.domain.post.dto.response.BookmarkedPostResponse
 import io.waggle.waggleapiserver.domain.post.repository.PostRepository
 import io.waggle.waggleapiserver.domain.recruitment.dto.response.RecruitmentResponse
 import io.waggle.waggleapiserver.domain.recruitment.repository.RecruitmentRepository
@@ -105,7 +105,7 @@ class BookmarkService(
                             recruitmentsByPostId[post.id]
                                 ?: emptyList()
                         ).map { RecruitmentResponse.from(it) }
-                    PostSimpleResponse.of(
+                    BookmarkedPostResponse.of(
                         post,
                         UserSimpleResponse.from(author),
                         recruitments,
