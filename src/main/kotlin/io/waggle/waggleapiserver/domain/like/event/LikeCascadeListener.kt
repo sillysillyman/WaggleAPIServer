@@ -35,7 +35,7 @@ class LikeCascadeListener(
         likeRepository.deleteByCommentPostTeamId(event.teamId)
     }
 
-    // 그 사용자가 누른 좋아요와 그 사용자의 글·댓글이 받은 좋아요를 모두 정리.
+    // 그 사용자가 누른 좋아요와 그 사용자의 글/댓글이 받은 좋아요를 모두 정리.
     @EventListener
     @Transactional(propagation = Propagation.MANDATORY)
     fun onUserDeactivated(event: UserDeactivatedEvent) {

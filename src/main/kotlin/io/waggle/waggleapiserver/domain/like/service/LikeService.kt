@@ -28,8 +28,7 @@ class LikeService(
     ): LikeResult {
         checkTargetExists(type, targetId)
 
-        // 이미 눌린 상태면 INSERT 생략. created는 PUT의 201/200을 가르는 데만 쓰임.
-        val likeId = LikeId(type = type, targetId = targetId, userId = user.id)
+        val likeId = LikeId(type, targetId, user.id)
         val created = !likeRepository.existsById(likeId)
         if (created) {
             likeRepository.save(Like(likeId))
@@ -53,7 +52,7 @@ class LikeService(
     ): LikeResponse {
         checkTargetExists(type, targetId)
 
-        likeRepository.deleteById(LikeId(type = type, targetId = targetId, userId = user.id))
+        likeRepository.deleteById(LikeId(type, targetId, user.id))
 
         return LikeResponse.of(
             liked = false,
@@ -61,7 +60,6 @@ class LikeService(
         )
     }
 
-    // tombstone은 soft delete가 아니라 @SQLRestriction에 안 걸리므로 조건을 명시함.
     private fun checkTargetExists(
         type: LikeType,
         targetId: Long,
@@ -76,3 +74,8 @@ class LikeService(
         }
     }
 }
+
+data class LikeResult(
+    val created: Boolean,
+    val response: LikeResponse,
+)

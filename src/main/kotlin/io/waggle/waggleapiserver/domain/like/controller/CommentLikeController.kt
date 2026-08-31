@@ -23,7 +23,7 @@ class CommentLikeController(
 ) {
     @Operation(
         summary = "댓글 좋아요",
-        description = "멱등. 최초 생성 시 201, 이미 좋아요한 상태면 200.",
+        description = "최초 생성 시 201, 이미 좋아요한 상태면 200을 반환함",
     )
     @PutMapping
     fun likeComment(
@@ -36,10 +36,7 @@ class CommentLikeController(
             .body(result.response)
     }
 
-    @Operation(
-        summary = "댓글 좋아요 취소",
-        description = "멱등. 좋아요하지 않은 상태에서 호출해도 200.",
-    )
+    @Operation(summary = "댓글 좋아요 취소")
     @DeleteMapping
     fun unlikeComment(
         @PathVariable commentId: Long,
