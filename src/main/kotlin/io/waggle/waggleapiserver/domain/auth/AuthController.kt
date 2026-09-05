@@ -29,7 +29,8 @@ class AuthController(
     @PostMapping("/oauth/redeem")
     fun redeemOtt(
         @Valid @RequestBody request: OttRedeemRequest,
-    ): AccessTokenResponse = authService.redeemOtt(request.ott)
+        response: HttpServletResponse,
+    ): AccessTokenResponse = authService.redeemOtt(request.ott, response)
 
     @Operation(
         summary = "액세스 토큰 재발급",

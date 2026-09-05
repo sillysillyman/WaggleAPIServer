@@ -24,7 +24,6 @@ class AuthService(
     fun issueOttForOAuth(
         userId: UUID,
         role: UserRole,
-        response: HttpServletResponse,
     ): String {
         val accessToken = jwtProvider.generateAccessToken(userId, role)
         val refreshToken = jwtProvider.generateRefreshToken(userId, role)
@@ -35,26 +34,44 @@ class AuthService(
             Duration.ofMillis(refreshTokenTtl),
         )
 
-        val maxAgeSeconds = (refreshTokenTtl / 1000).toInt()
-        authCookieManager.addRefreshTokenCookie(response, refreshToken, maxAgeSeconds)
-
         val ott = UUID.randomUUID().toString()
         redisTemplate.opsForValue().set(
             "oauth-ott:$ott",
             accessToken,
             Duration.ofMinutes(1),
         )
+        // 쿠키를 여기서도 심으면 쿠키함이 둘로 갈려 한쪽의 refresh 가 다른 쪽을 재사용 탐지로 끊음
+        redisTemplate.opsForValue().set(
+            "oauth-ott-refresh:$ott",
+            refreshToken,
+            Duration.ofMinutes(1),
+        )
 
         return ott
     }
 
-    fun redeemOtt(ott: String): AccessTokenResponse {
+    fun redeemOtt(
+        ott: String,
+        response: HttpServletResponse,
+    ): AccessTokenResponse {
         val accessToken =
             redisTemplate.opsForValue().getAndDelete("oauth-ott:$ott")
                 ?: throw BusinessException(
                     ErrorCode.OAUTH_OTT_INVALID,
                     "Invalid or expired OAuth one-time token",
                 )
+
+        // 통과시키면 리프레시 없는 반쪽 로그인이 되어 액세스 토큰 만료 시 조용히 끊김
+        val refreshToken =
+            redisTemplate.opsForValue().getAndDelete("oauth-ott-refresh:$ott")
+                ?: throw BusinessException(
+                    ErrorCode.OAUTH_OTT_INVALID,
+                    "OAuth one-time token has no paired refresh token",
+                )
+
+        val maxAgeSeconds = (refreshTokenTtl / 1000).toInt()
+        authCookieManager.addRefreshTokenCookie(response, refreshToken, maxAgeSeconds)
+
         return AccessTokenResponse(accessToken)
     }
 
