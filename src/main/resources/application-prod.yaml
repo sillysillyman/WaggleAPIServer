@@ -1,6 +1,8 @@
 app:
   cors:
-    allowed-origins: https://waggle.lol
+    # app.waggle.lol 은 서빙하는 도메인이 아니라 안드로이드 앱 웹뷰의 가상 origin
+    # api 와 같은 waggle.lol 사이트여야 SameSite=Lax 리프레시 쿠키가 실림
+    allowed-origins: https://waggle.lol,https://app.waggle.lol
   discord:
     webhook-url: ${DISCORD_WEBHOOK_URL:}
     mention-role-id: ${DISCORD_MENTION_ROLE_ID:}
