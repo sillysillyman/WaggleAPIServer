@@ -1,5 +1,6 @@
 package io.waggle.waggleapiserver.common.infrastructure.websocket
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.ChannelRegistration
@@ -15,6 +16,7 @@ class WebSocketConfig(
     private val webSocketAuthHandshakeInterceptor: WebSocketAuthHandshakeInterceptor,
     private val webSocketAuthHandshakeHandler: WebSocketAuthHandshakeHandler,
     private val stompRateLimitInterceptor: StompRateLimitInterceptor,
+    @Value("\${app.cors.allowed-origins}") private val allowedOrigins: List<String>,
 ) : WebSocketMessageBrokerConfigurer {
     @Bean
     fun webSocketHeartbeatScheduler(): ThreadPoolTaskScheduler =
@@ -24,24 +26,21 @@ class WebSocketConfig(
         }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+        // REST CORS 와 목록이 갈리면 REST 는 되는데 메시지만 403 으로 끊김
+        val originPatterns = allowedOrigins.toTypedArray()
+
         // 순수 WebSocket 엔드포인트
         registry
             .addEndpoint("/ws")
-            .setAllowedOriginPatterns(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "https://waggle.lol",
-            ).addInterceptors(webSocketAuthHandshakeInterceptor)
+            .setAllowedOriginPatterns(*originPatterns)
+            .addInterceptors(webSocketAuthHandshakeInterceptor)
             .setHandshakeHandler(webSocketAuthHandshakeHandler)
 
         // SockJS 폴백 엔드포인트
         registry
             .addEndpoint("/ws-sockjs")
-            .setAllowedOriginPatterns(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "https://waggle.lol",
-            ).addInterceptors(webSocketAuthHandshakeInterceptor)
+            .setAllowedOriginPatterns(*originPatterns)
+            .addInterceptors(webSocketAuthHandshakeInterceptor)
             .setHandshakeHandler(webSocketAuthHandshakeHandler)
             .withSockJS()
     }
