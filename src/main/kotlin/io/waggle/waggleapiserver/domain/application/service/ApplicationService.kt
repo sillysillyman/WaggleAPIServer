@@ -387,7 +387,7 @@ class ApplicationService(
         recruitmentRepository.findForUpdateByPostIdAndPosition(application.postId, application.position)?.let {
             it.closeIfFull(it.approvedCount + 1)
             recruitmentRepository.increaseApprovedCount(it.id)
-            // 마감일이 미래로 남으면 직무를 추가해 마감된 글을 다시 열 수 있음
+            // 수동 마감처럼 마감일 표시를 실제로 마감된 날로 맞춤
             if (recruitmentRepository.findByPostId(application.postId).none { recruitment ->
                     recruitment.isRecruiting()
                 }
