@@ -25,7 +25,6 @@
 | H6 | 탈퇴 후 개인정보 처리가 개인정보 수집·이용 동의서와 어긋남 | 높음 | 불필요 |
 | M1 | 정렬 값이 ID가 아닌 목록의 커서가 ID 하나뿐이라 목록이 끊기거나 건너뜀 | 중간 | 필요 (동시 배포) |
 | M2 | `@CurrentUser` 요청마다 사용자와 약관을 조회하는 고정 쿼리 | 중간 | 불필요 |
-| M3 | 메시지 대화 조회가 매번 filesort | 중간 | 불필요 |
 | M8 | 완료된 팀이 계속 지원을 받고, 상태를 바꿀 때마다 리뷰 요청이 반복됨 | 중간 | 필요 (후속) |
 | M11 | Presigned URL 업로드에 크기 제한이 없고 고아 객체가 쌓임 | 중간 | 정책에 따라 |
 | M14 | 지원자가 있는 모집글도 삭제됨 | 중간 | 필요 (웹 선행) |
@@ -124,15 +123,6 @@
 - **권장 방향**
   - 최신 약관 조회 캐싱: 약관은 마이그레이션으로만 추가되어 재시작 시 갱신되므로 캐시가 낡을 위험이 작다. Spring 캐시를 켜면 classpath의 Redis가 캐시 저장소로 자동 선택되므로 `spring.cache.type=simple`을 명시할 것
   - 컬렉션 LAZY 전환: `@CurrentUser`의 `User`는 트랜잭션 밖에서 읽힌 분리된 사본인데, 응답 DTO가 그 컬렉션을 직접 읽음 (`UserSimpleResponse.from`의 `skills` 등). 지금 전환하면 댓글 작성과 수정(`CommentService.updateComment`), 모집글 작성과 수정, 내 프로필 조회(`GET /users/me` → `UserProfileResponse`의 `skills`, `portfolioUrls`) 응답이 `LazyInitializationException`으로 깨지므로 이 호출부를 먼저 정리해야 함
-- **프론트**: 불필요
-
-### M3. 메시지 대화 조회가 매번 filesort
-
-- **위치**: `MessageRepository.findMessageHistoryBefore`, `findMessageHistoryAfter`
-- **문제**: `(A→B) OR (B→A)` 조건이라 인덱스에서 떨어진 두 구간을 읽고, MySQL은 두 구간을 `id` 순으로 병합하지 못해 정렬을 따로 한다. 인덱스 구성을 바꿔도 해결되지 않는다.
-- **영향**: 대화가 길어질수록 페이지마다 그 대화 전체를 읽고 정렬한다.
-- **확인**: MySQL 8.0.45 EXPLAIN
-- **권장 방향**: 방향별로 `ORDER BY id DESC LIMIT n`을 한 뒤 `UNION ALL`로 합쳐 최대 `2n`개만 다시 정렬한다.
 - **프론트**: 불필요
 
 ### M8. 완료된 팀이 계속 지원을 받고, 상태를 바꿀 때마다 리뷰 요청이 반복됨

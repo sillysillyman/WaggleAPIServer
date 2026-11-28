@@ -14,7 +14,6 @@ import io.waggle.waggleapiserver.domain.message.repository.MessageRepository
 import io.waggle.waggleapiserver.domain.user.User
 import io.waggle.waggleapiserver.domain.user.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -66,16 +65,15 @@ class MessageService(
         user: User,
     ): CursorResponse<MessageResponse> {
         val (cursor, size, direction) = cursorQuery
-        val pageable = PageRequest.of(0, size + 1)
 
         val messages =
             when (direction ?: CursorDirection.BEFORE) {
                 CursorDirection.BEFORE -> {
-                    messageRepository.findMessageHistoryBefore(user.id, partnerId, cursor, pageable)
+                    messageRepository.findMessageHistoryBefore(user.id, partnerId, cursor, size + 1)
                 }
 
                 CursorDirection.AFTER -> {
-                    messageRepository.findMessageHistoryAfter(user.id, partnerId, cursor, pageable)
+                    messageRepository.findMessageHistoryAfter(user.id, partnerId, cursor, size + 1)
                 }
             }
 
